@@ -1,3 +1,31 @@
+# VectorDBBench DuckDB Clients
+
+## Install
+
+```sh
+uv venv
+```
+
+```sh
+source .venv/bin/activate
+```
+
+```sh
+uv pip install -e '.[duckdb]'
+```
+
+```sh
+vectordbbench duckdb --help
+```
+
+```sh
+vectordbbench duckdbpdxearch --help
+```
+
+## Changes
+
+DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and a client to benchmark DuckDB's PDXearch extension (`duckdbpdxearch`).
+
 # VectorDBBench(VDBBench): A Benchmark Tool for VectorDB
 
 [![version](https://img.shields.io/pypi/v/vectordb-bench.svg?color=blue)](https://pypi.org/project/vectordb-bench/)
