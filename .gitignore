@@ -16,3 +16,7 @@ logs/
 # AI rules
 CLAUDE.md
 AGENTS.md
+
+# DuckDB files
+*.db
+*.wal
