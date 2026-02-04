@@ -9,7 +9,15 @@ from .config import DuckDBConnectionConfigDict, DuckDBCaseConfig
 
 
 class DuckDB(VectorDB):
-    def __init__(self, dim: int, db_config: DuckDBConnectionConfigDict, db_case_config: DuckDBCaseConfig, drop_old: bool = False, with_scalar_labels: bool = False, **kwargs):
+    def __init__(
+        self,
+        dim: int,
+        db_config: DuckDBConnectionConfigDict,
+        db_case_config: DuckDBCaseConfig,
+        drop_old: bool = False,
+        with_scalar_labels: bool = False,
+        **kwargs,
+    ):
         self.name = "DuckDB"
 
         self.dims = dim
@@ -55,13 +63,13 @@ class DuckDB(VectorDB):
 
     def _create_connection(self, read_only: bool):
         # Note: We don't support concurrent connections currently.
-        config = {'allow_unsigned_extensions': 'true'}
-        if self.conn_config['duckdb_threads'] is not None:
-            config['threads'] = self.conn_config['duckdb_threads']
+        config = {"allow_unsigned_extensions": "true"}
+        if self.conn_config["duckdb_threads"] is not None:
+            config["threads"] = self.conn_config["duckdb_threads"]
 
         return duckdb.connect(
             config=config,
-            database=self.conn_config['database_name'],
+            database=self.conn_config["database_name"],
             read_only=read_only,
         )
 
@@ -76,14 +84,16 @@ class DuckDB(VectorDB):
         assert self.conn is not None
         assert self.dims == dims
 
-        create_table_sql = f"""CREATE TABLE {self.conn_config['table_name']}
+        create_table_sql = (
+            f"""CREATE TABLE {self.conn_config['table_name']}
                 ({self.id_column_name} INTEGER,
                 {self.embedding_column_name} {self.embedding_column_element_type}[{self.dims}],
-                {self.predicate_column_name} VARCHAR(64));""" \
-            if self.with_predicate_column \
+                {self.predicate_column_name} VARCHAR(64));"""
+            if self.with_predicate_column
             else f"""CREATE TABLE {self.conn_config['table_name']}
                 ({self.id_column_name} INTEGER,
                 {self.embedding_column_name} {self.embedding_column_element_type}[{self.dims}]);"""
+        )
 
         self.conn.execute(create_table_sql)
         self.conn.commit()
@@ -91,8 +101,7 @@ class DuckDB(VectorDB):
     def _drop_table(self):
         assert self.conn is not None
 
-        self.conn.execute(
-            f"DROP TABLE IF EXISTS {self.conn_config['table_name']}")
+        self.conn.execute(f"DROP TABLE IF EXISTS {self.conn_config['table_name']}")
         self.conn.commit()
 
     # ----------------------------------
@@ -101,16 +110,14 @@ class DuckDB(VectorDB):
     def _drop_index(self):
         assert self.conn is not None
 
-        self.conn.execute(
-            f"DROP INDEX IF EXISTS {self.case_config.index_name}")
+        self.conn.execute(f"DROP INDEX IF EXISTS {self.case_config.index_name}")
         self.conn.commit()
 
     def _create_index(self):
         assert self.conn is not None
 
         index_param = self.case_config.index_param()
-        index_options = ", ".join(
-            [f"{k}={v}" for k, v in index_param['index_options']])
+        index_options = ", ".join([f"{k}={v}" for k, v in index_param["index_options"]])
         with_clause = f"WITH ({index_options})" if index_options else ""
         create_index_sql = f"""CREATE INDEX {index_param['index_name']} ON {self.conn_config['table_name']}
                 USING {index_param['index_type']} ({self.embedding_column_name}) {with_clause}"""
@@ -127,7 +134,9 @@ class DuckDB(VectorDB):
     # ----------------------------------
     # Populate table
     # ----------------------------------
-    def insert_embeddings(self, embeddings: list[list[float]], metadata: list[int], labels_data: list[str] | None = None, **kwargs: Any) -> tuple[int, Exception | None]:
+    def insert_embeddings(
+        self, embeddings: list[list[float]], metadata: list[int], labels_data: list[str] | None = None, **kwargs: Any
+    ) -> tuple[int, Exception | None]:
         assert self.conn is not None
         if self.with_predicate_column:
             assert labels_data is not None
@@ -140,8 +149,7 @@ class DuckDB(VectorDB):
                 sql_statement = f"INSERT INTO {self.conn_config['table_name']} VALUES (?, ?)"
                 insert_pairs = list(zip(metadata, embeddings))
             # TODO: Consider more efficient ingestion: https://duckdb.org/docs/stable/clients/python/data_ingestion
-            self.conn.executemany(
-                sql_statement, insert_pairs)
+            self.conn.executemany(sql_statement, insert_pairs)
             self.conn.commit()
 
             return len(metadata), None
@@ -175,6 +183,7 @@ class DuckDB(VectorDB):
         result = self.conn.execute(
             f"""SELECT {self.id_column_name} FROM {self.conn_config['table_name']} {self.where_clause}
                 ORDER BY {array_function_name}({self.embedding_column_name},{query}::{self.embedding_column_element_type}[{self.dims}])
-                LIMIT {K};""")
+                LIMIT {K};"""
+        )
 
         return [int(i[0]) for i in result.fetchall()]

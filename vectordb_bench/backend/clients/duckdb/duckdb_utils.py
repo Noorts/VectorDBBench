@@ -12,8 +12,7 @@ class SetDuckDBThreadsTo:
             self.active = True
             self.new_threads = new_threads
             # Retrieve the maximum number of threads DuckDB is currently allowed to use.
-            self.old_threads = conn.execute(
-                "SELECT current_setting('threads')").fetchone()[0]
+            self.old_threads = conn.execute("SELECT current_setting('threads')").fetchone()[0]
 
     def __enter__(self):
         if self.active:
