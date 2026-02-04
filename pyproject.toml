@@ -80,6 +80,7 @@ all = [
     "turbopuffer[fast]",
     'zvec',
     'duckdb==1.4.4',
+    "pandas",
 ]
 
 qdrant          = [ "qdrant-client" ]
@@ -109,7 +110,7 @@ alisql          = [ "mysql-connector-python" ]
 doris           = [ "doris-vector-search" ]
 turbopuffer     = [ "turbopuffer" ]
 zvec            = [ "zvec" ]
-duckdb          = [ "duckdb==1.4.4" ]
+duckdb          = [ "duckdb==1.4.4", "pandas" ]
 
 [project.urls]
 Repository  = "https://github.com/zilliztech/VectorDBBench"

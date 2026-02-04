@@ -1,6 +1,8 @@
 from contextlib import contextmanager
 from typing import Generator, Any
 
+import pandas as pd
+
 from ..api import VectorDB, FilterOp, Filter, IndexType
 import duckdb
 from .config import CreateIndex
@@ -142,14 +144,19 @@ class DuckDB(VectorDB):
             assert labels_data is not None
 
         try:
+            df = pd.DataFrame(
+                {
+                    self.id_column_name: metadata,
+                    self.embedding_column_name: embeddings,
+                }
+            )
             if self.with_predicate_column:
-                sql_statement = f"INSERT INTO {self.conn_config['table_name']} VALUES (?, ?, ?)"
-                insert_pairs = list(zip(metadata, embeddings, labels_data))
-            else:
-                sql_statement = f"INSERT INTO {self.conn_config['table_name']} VALUES (?, ?)"
-                insert_pairs = list(zip(metadata, embeddings))
-            # TODO: Consider more efficient ingestion: https://duckdb.org/docs/stable/clients/python/data_ingestion
-            self.conn.executemany(sql_statement, insert_pairs)
+                df[self.predicate_column_name] = labels_data
+
+            # https://duckdb.org/docs/stable/clients/python/data_ingestion#directly-accessing-dataframes-and-arrow-objects
+            temp_view_name = "temp_view"
+            self.conn.register(temp_view_name, df)
+            self.conn.execute(f"INSERT INTO {self.conn_config['table_name']} FROM {temp_view_name}")
             self.conn.commit()
 
             return len(metadata), None
