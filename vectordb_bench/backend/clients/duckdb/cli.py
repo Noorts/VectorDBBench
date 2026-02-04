@@ -124,9 +124,6 @@ class DuckDBPDXearchTypedDict(DuckDBWithExtensionTypedDict):
 def DuckDB(**parameters: Unpack[DuckDBTypedDict]):
     from .config import DuckDBConnectionConfig, DuckDBCasePlainConfig
 
-    print(parameters["num_concurrency"])
-    print(parameters["search_concurrent"])
-
     assert (
         parameters["num_concurrency"] == [1] or parameters["search_concurrent"] == False
     ), "The DuckDB client does not yet support concurrent search."
