@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 from tqdm import tqdm
+from fsspec.callbacks import Callback
 
 from vectordb_bench import config
 
@@ -46,6 +47,38 @@ class DatasetReader(ABC):
     @abstractmethod
     def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
         pass
+
+
+# TODO: Separate S3 tracking (relies on base class) from AliyunOSS tracking (relies on special callback method).
+# TODO: Reduce code duplication?
+class ProgressUpdateCallback(Callback):
+    """Tracks download progress at byte granularity across multiple files. Integrates with a tqdm progress bar."""
+
+    def __init__(self, tqdm_progress_bar, total_bytes_offset):
+        super().__init__()
+        self.tqdm_progress_bar = tqdm_progress_bar
+        self.total_bytes_offset = total_bytes_offset
+        self.file_bytes = 0
+
+    def relative_update(self, inc):
+        """For fsspec: called with incremental byte count."""
+        self.file_bytes += inc
+        self.tqdm_progress_bar.n = self.total_bytes_offset + self.file_bytes
+        self.tqdm_progress_bar.refresh()
+
+    def absolute_update(self, bytes_consumed):
+        """For oss2: called with absolute byte count for current file."""
+        self.file_bytes = bytes_consumed
+        self.tqdm_progress_bar.n = self.total_bytes_offset + self.file_bytes
+        self.tqdm_progress_bar.refresh()
+
+    def as_oss2_callback(self):
+        """Returns a callback function compatible with oss2's progress_callback signature."""
+
+        def oss2_progress(bytes_consumed, total_bytes):
+            self.absolute_update(bytes_consumed)
+
+        return oss2_progress
 
 
 class AliyunOSSReader(DatasetReader):
@@ -93,12 +126,40 @@ class AliyunOSSReader(DatasetReader):
         if len(downloads) == 0:
             return
 
-        log.info(f"Start to downloading files, total count: {len(downloads)}")
-        for remote_file, local_file in tqdm(downloads):
-            log.debug(f"downloading file {remote_file} to {local_file}")
-            self.bucket.get_object_to_file(remote_file.as_posix(), local_file.absolute())
+        total_bytes_to_download = sum(
+            self.bucket.get_object_meta(remote.as_posix()).content_length for remote, _ in downloads
+        )
+        log.info(
+            f"Started downloading files from AliyunOSS, total count: {len(downloads)}, total size: {total_bytes_to_download / (1024**3):.2f} GB"
+        )
 
-        log.info(f"Succeed to download all files, downloaded file count = {len(downloads)}")
+        total_files = len(downloads)
+        tqdm_progress_bar = tqdm(
+            total=total_bytes_to_download,
+            desc=f"Downloaded (0/{total_files} files)",
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+        )
+        bytes_downloaded = 0
+        files_completed = 0
+
+        for remote_file, local_file in downloads:
+            log.debug(f"Downloading file '{remote_file}' to '{local_file}'")
+            file_size = self.bucket.get_object_meta(remote_file.as_posix()).content_length
+
+            callback = ProgressUpdateCallback(tqdm_progress_bar, bytes_downloaded)
+            self.bucket.get_object_to_file(
+                remote_file.as_posix(),
+                local_file.absolute(),
+                progress_callback=callback.as_oss2_callback(),
+            )
+            bytes_downloaded += file_size
+            files_completed += 1
+            tqdm_progress_bar.set_description(f"Downloaded ({files_completed}/{total_files} files)")
+
+        tqdm_progress_bar.close()
+        log.info(f"Completed downloading all files, downloaded file count = {len(downloads)}")
 
 
 class AwsS3Reader(DatasetReader):
@@ -137,12 +198,35 @@ class AwsS3Reader(DatasetReader):
         if len(downloads) == 0:
             return
 
-        log.info(f"Start to downloading files, total count: {len(downloads)}")
-        for s3_file in tqdm(downloads):
-            log.debug(f"downloading file {s3_file} to {local_ds_root}")
-            self.fs.download(s3_file, local_ds_root.as_posix())
+        total_bytes_to_download = sum(self.fs.info(f).get("size", 0) for f in downloads)
+        log.info(
+            f"Started downloading files from S3, total count: {len(downloads)}, total size: {total_bytes_to_download / (1024**3):.2f} GB"
+        )
 
-        log.info(f"Succeed to download all files, downloaded file count = {len(downloads)}")
+        total_files = len(downloads)
+        tqdm_progress_bar = tqdm(
+            total=total_bytes_to_download,
+            desc=f"Downloaded (0/{total_files} files)",
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+        )
+        bytes_downloaded = 0
+        files_completed = 0
+
+        for s3_file in downloads:
+            log.debug(f"Downloading file '{s3_file}' to '{local_ds_root}'")
+            file_size = self.fs.info(s3_file).get("size", 0)
+
+            callback = ProgressUpdateCallback(tqdm_progress_bar, bytes_downloaded)
+            local_file = local_ds_root / s3_file.name
+            self.fs.get_file(s3_file.as_posix(), local_file.as_posix(), callback=callback)
+            bytes_downloaded += file_size
+            files_completed += 1
+            tqdm_progress_bar.set_description(f"Downloaded ({files_completed}/{total_files} files)")
+
+        tqdm_progress_bar.close()
+        log.info(f"Completed downloading all files, downloaded file count = {len(downloads)}")
 
     def validate_file(self, remote: pathlib.Path, local: pathlib.Path) -> bool:
         # info() uses ls() inside, maybe we only need to ls once
