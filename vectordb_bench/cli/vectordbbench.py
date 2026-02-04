@@ -5,6 +5,7 @@ from ..backend.clients.chroma.cli import Chroma
 from ..backend.clients.clickhouse.cli import Clickhouse
 from ..backend.clients.cockroachdb.cli import CockroachDB as CockroachDBCli
 from ..backend.clients.doris.cli import Doris
+from ..backend.clients.duckdb.cli import (DuckDB, DuckDBPDXearch)
 from ..backend.clients.elastic_cloud.cli import (
     ElasticCloudHNSW,
     ElasticCloudHNSWBBQ,
@@ -74,6 +75,8 @@ cli.add_command(Doris)
 cli.add_command(TurboPuffer)
 cli.add_command(Chroma)
 cli.add_command(Zvec)
+cli.add_command(DuckDB)
+cli.add_command(DuckDBPDXearch)
 
 
 if __name__ == "__main__":

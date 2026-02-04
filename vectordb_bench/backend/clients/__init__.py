@@ -57,6 +57,7 @@ class DB(Enum):
     Doris = "Doris"
     TurboPuffer = "TurboPuffer"
     Zvec = "Zvec"
+    DuckDB = "DuckDB"
 
     @property
     def init_cls(self) -> type[VectorDB]:  # noqa: PLR0911, PLR0912, C901, PLR0915
@@ -233,6 +234,11 @@ class DB(Enum):
             from .zvec.zvec import Zvec
 
             return Zvec
+
+        if self == DB.DuckDB:
+            from .duckdb.duckdb import DuckDB
+
+            return DuckDB
 
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
@@ -413,6 +419,11 @@ class DB(Enum):
 
             return ZvecConfig
 
+        if self == DB.DuckDB:
+            from .duckdb.config import DuckDBConnectionConfig
+
+            return DuckDBConnectionConfig
+
         msg = f"Unknown DB: {self.name}"
         raise ValueError(msg)
 
@@ -573,6 +584,11 @@ class DB(Enum):
             from .chroma.config import ChromaIndexConfig
 
             return ChromaIndexConfig
+
+        if self == DB.DuckDB:
+            from .duckdb.config import _duckdb_case_config
+
+            return _duckdb_case_config.get(index_type)
 
         # DB.Pinecone, DB.Redis
         return EmptyDBCaseConfig
