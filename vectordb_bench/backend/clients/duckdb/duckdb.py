@@ -49,6 +49,7 @@ class DuckDB(VectorDB):
     @contextmanager
     def init(self) -> Generator[None, None, None]:
         self.conn = self._create_connection(read_only=False)
+        self.conn.execute("PRAGMA disable_progress_bar;")
 
         if self.case_config.index == IndexType.PDXEARCH:
             self._load_extension(self.case_config.extension_path)
