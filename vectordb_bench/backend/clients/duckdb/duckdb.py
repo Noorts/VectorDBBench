@@ -50,6 +50,10 @@ class DuckDB(VectorDB):
     def init(self) -> Generator[None, None, None]:
         self.conn = self._create_connection(read_only=False)
         self.conn.execute("PRAGMA disable_progress_bar;")
+        # Disable DuckDB's late materialization query optimization as the
+        # PDXearch (and VSS) extension does not handle it yet, leading to
+        # suboptimal query plans when K <= 50.
+        self.conn.execute("SET late_materialization_max_rows = 0;")
 
         if self.case_config.index == IndexType.PDXEARCH:
             self._load_extension(self.case_config.extension_path)
