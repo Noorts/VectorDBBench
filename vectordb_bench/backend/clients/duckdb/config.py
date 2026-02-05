@@ -114,29 +114,29 @@ class DuckDBCasePDXearchConfig(DuckDBCaseConfig):
         raise ValueError(f"Unsupported metric type: {self.metric_type}")
 
     def index_param(self) -> DuckDBIndexParam:
-        index_options = [{"index_metric_type": self._metric_type_to_index_metric_type()}]
+        index_options = [{"metric": self._metric_type_to_index_metric_type()}]
         if self.index_quantization_type is not None:
             index_options.append(
                 {
-                    "index_quantization_type": self.index_quantization_type,
+                    "quantization": self.index_quantization_type,
                 }
             )
         if self.index_n_probe is not None:
             index_options.append(
                 {
-                    "index_n_probe": self.index_n_probe,
+                    "n_probe": self.index_n_probe,
                 }
             )
         if self.index_normalize is not None:
             index_options.append(
                 {
-                    "index_normalize": self.index_normalize,
+                    "normalize": self.index_normalize,
                 }
             )
         if self.index_seed is not None:
             index_options.append(
                 {
-                    "index_seed": self.index_seed,
+                    "seed": self.index_seed,
                 }
             )
 

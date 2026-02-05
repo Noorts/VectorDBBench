@@ -115,11 +115,24 @@ class DuckDB(VectorDB):
         self.conn.execute(f"DROP INDEX IF EXISTS {self.case_config.index_name}")
         self.conn.commit()
 
+    def _format_sql_value(self, value) -> str:
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, str):
+            return f"'{value}'"
+        return str(value)
+
     def _create_index(self):
         assert self.conn is not None
 
         index_param = self.case_config.index_param()
-        index_options = ", ".join([f"{k}={v}" for k, v in index_param["index_options"]])
+        index_options = ", ".join(
+            [
+                f"{k}={self._format_sql_value(v)}"
+                for opt_dict in index_param["index_options"]
+                for k, v in opt_dict.items()
+            ]
+        )
         with_clause = f"WITH ({index_options})" if index_options else ""
         create_index_sql = f"""CREATE INDEX {index_param['index_name']} ON {self.conn_config['table_name']}
                 USING {index_param['index_type']} ({self.embedding_column_name}) {with_clause}"""
