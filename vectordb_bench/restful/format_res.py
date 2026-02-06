@@ -29,7 +29,8 @@ class FormatResult(BaseModel):
     # metrics
     max_load_count: int = 0
     load_duration: int = 0
-    qps: float = 0
+    serial_qps: float = 0
+    concurrent_qps: float = 0
     serial_latency_p99: float = 0
     recall: float = 0
     ndcg: float = 0

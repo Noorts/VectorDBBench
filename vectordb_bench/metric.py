@@ -19,9 +19,11 @@ class Metric:
     load_duration: float = 0.0  # insert + optimize
 
     # for performance cases
-    qps: float = 0.0
+    serial_qps: float = 0.0
+    concurrent_qps: float = 0.0
     serial_latency_p99: float = 0.0
     serial_latency_p95: float = 0.0
+    serial_latency_avg: float = 0.0
     recall: float = 0.0
     ndcg: float = 0.0
     conc_num_list: list[int] = field(default_factory=list)
@@ -54,7 +56,8 @@ LOAD_DURATION_METRIC = "load_duration"
 SERIAL_LATENCY_P99_METRIC = "serial_latency_p99"
 SERIAL_LATENCY_P95_METRIC = "serial_latency_p95"
 MAX_LOAD_COUNT_METRIC = "max_load_count"
-QPS_METRIC = "qps"
+SERIAL_QPS_METRIC = "serial_qps"
+CONCURRENT_QPS_METRIC = "concurrent_qps"
 RECALL_METRIC = "recall"
 
 metric_unit_map = {
@@ -72,11 +75,12 @@ lower_is_better_metrics = [
 ]
 
 metric_order = [
-    QPS_METRIC,
-    RECALL_METRIC,
     LOAD_DURATION_METRIC,
+    SERIAL_QPS_METRIC,
     SERIAL_LATENCY_P99_METRIC,
     SERIAL_LATENCY_P95_METRIC,
+    RECALL_METRIC,
+    CONCURRENT_QPS_METRIC,
     MAX_LOAD_COUNT_METRIC,
 ]
 

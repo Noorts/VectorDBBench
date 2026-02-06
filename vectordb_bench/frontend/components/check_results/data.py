@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import asdict
-from vectordb_bench.metric import QPS_METRIC, isLowerIsBetterMetric
+from vectordb_bench.metric import CONCURRENT_QPS_METRIC, isLowerIsBetterMetric
 from vectordb_bench.models import CaseResult, ResultLabel
 
 
@@ -85,9 +85,9 @@ def mergeTasks(tasks: list[CaseResult]):
     return mergedTasks, failedTasks
 
 
-# for same db-label, we use the results with the highest qps
+# for same db-label, we use the results with the highest concurrent qps
 def mergeMetrics(metrics_1: dict, metrics_2: dict) -> dict:
-    return metrics_1 if metrics_1.get(QPS_METRIC, 0) > metrics_2.get(QPS_METRIC, 0) else metrics_2
+    return metrics_1 if metrics_1.get(CONCURRENT_QPS_METRIC, 0) > metrics_2.get(CONCURRENT_QPS_METRIC, 0) else metrics_2
 
 
 def getBetterMetric(metric, value_1, value_2):

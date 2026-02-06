@@ -388,12 +388,14 @@ class TestResult(BaseModel):
         max_db_labels = max(map(len, [f.task_config.db_config.db_label for f in filtered_results])) + 3
         max_case = max(map(len, [f.task_config.case_config.case_name for f in filtered_results]))
         max_load_dur = max(map(len, [str(f.metrics.load_duration) for f in filtered_results])) + 3
-        max_qps = max(map(len, [str(f.metrics.qps) for f in filtered_results])) + 3
+        serial_qps = max(map(len, [str(f.metrics.serial_qps) for f in filtered_results])) + 3
+        concurrent_qps = max(map(len, [str(f.metrics.concurrent_qps) for f in filtered_results])) + 6
         max_recall = max(map(len, [str(f.metrics.recall) for f in filtered_results])) + 3
 
         max_db_labels = 8 if max_db_labels < 8 else max_db_labels
         max_load_dur = 11 if max_load_dur < 11 else max_load_dur
-        max_qps = 10 if max_qps < 10 else max_qps
+        serial_qps = 12 if serial_qps < 12 else serial_qps
+        concurrent_qps = 16 if concurrent_qps < 16 else concurrent_qps
         max_recall = 13 if max_recall < 13 else max_recall
 
         LENGTH = (  # noqa: N806
@@ -402,17 +404,18 @@ class TestResult(BaseModel):
             max_case,
             len(self.task_label),
             max_load_dur,
-            max_qps,
+            serial_qps,
             15,
             15,
             max_recall,
+            concurrent_qps,
             14,
             5,
         )
 
         DATA_FORMAT = (  # noqa: N806
             f"%-{max_db}s | %-{max_db_labels}s %-{max_case}s %-{len(self.task_label)}s"
-            f" | %-{max_load_dur}s %-{max_qps}s %-15s %-15s %-{max_recall}s %-14s"
+            f" | %-{max_load_dur}s %-{serial_qps}s %-{concurrent_qps}s %-15s %-15s %-{max_recall}s %-14s"
             f" | %-5s"
         )
 
@@ -422,10 +425,11 @@ class TestResult(BaseModel):
             "case",
             "label",
             "load_dur",
-            "qps",
+            "serial_qps",
             "latency(p99)",
             "latency(p95)",
             "recall",
+            "concurrent_qps",
             "max_load_count",
             "label",
         )
@@ -445,10 +449,11 @@ class TestResult(BaseModel):
                     f.task_config.case_config.case_name,
                     self.task_label,
                     f.metrics.load_duration,
-                    f.metrics.qps,
+                    f.metrics.serial_qps,
                     f.metrics.serial_latency_p99,
                     f.metrics.serial_latency_p95,
                     f.metrics.recall,
+                    f.metrics.concurrent_qps,
                     f.metrics.max_load_count,
                     f.label.value,
                 ),
