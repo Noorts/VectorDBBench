@@ -1,5 +1,11 @@
 # VectorDBBench DuckDB Clients
 
+- **New DuckDB clients**: DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and a client to benchmark DuckDB's PDXearch extension (`duckdbpdxearch`).
+
+- **New datasets**: We add new datasets. These are automatically downloaded from a private S3 bucket.
+
+- **Download progress**: We've improved the download progress indicator, displaying progress at the byte level instead of file level.
+
 ## Install
 
 1. Install uv using the [installation instructions](https://docs.astral.sh/uv/getting-started/installation/).
@@ -57,14 +63,6 @@
     vectordbbench duckdbpdxearch --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance1536D999K --duckdb-threads 10 --n-probe 28 --k 10 --num-concurrency 1
     ```
 
-
-## Changes
-
-- **New DuckDB clients**: DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and a client to benchmark DuckDB's PDXearch extension (`duckdbpdxearch`).
-
-- **New datasets**: We add new datasets. These are downloaded from a private repository.
-
-- **Download progress**: We've improved the download progress indicator, displaying progress at the byte level instead of file level.
 
 # VectorDBBench(VDBBench): A Benchmark Tool for VectorDB
 
