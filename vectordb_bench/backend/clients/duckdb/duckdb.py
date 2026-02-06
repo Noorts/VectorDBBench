@@ -79,6 +79,19 @@ class DuckDB(VectorDB):
         if self.case_config.index == IndexType.HNSW:
             self._load_vss_extension()
 
+        # Set session parameters
+        session_statements = [
+            f"SET {k} = {self._format_sql_value(v)};"
+            for opt_dict in self.case_config.session_param()["session_options"]
+            for k, v in opt_dict.items()
+        ]
+        if session_statements:
+            log.debug(f"Setting runtime session parameters:")
+            for statement in session_statements:
+                log.debug(f"  {statement}")
+                self.conn.execute(statement)
+            self.conn.commit()
+
         # Warmup query to ensure the table and extension index are loaded.
         self.prepare_filter(Filter(type=FilterOp.NonFilter))
         self.search_embedding([0.0] * self.dims)

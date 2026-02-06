@@ -158,8 +158,7 @@ class DuckDBCasePDXearchConfig(DuckDBCaseConfig):
         if self.runtime_n_probe is not None:
             session_options.append(
                 {
-                    "name": "runtime_n_probe",
-                    "value": self.runtime_n_probe,
+                    "pdxearch_n_probe": self.runtime_n_probe,
                 }
             )
         return {
@@ -235,8 +234,7 @@ class DuckDBCaseVSSConfig(DuckDBCaseConfig):
         if self.runtime_ef_search is not None:
             session_options.append(
                 {
-                    "name": "hnsw_ef_search",
-                    "value": self.runtime_ef_search,
+                    "hnsw_ef_search": self.runtime_ef_search,
                 }
             )
         return {
