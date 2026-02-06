@@ -304,7 +304,7 @@ class SerialSearchRunner:
 
     @utils.time_it
     def run(self) -> tuple[float, float, float, float]:
-        log.info(f"{mp.current_process().name:14} start serial search")
+        log.info(f"{mp.current_process().name:14} Starting serial search")
         if self.test_data is None:
             msg = "empty test_data"
             raise RuntimeError(msg)
@@ -318,7 +318,7 @@ class SerialSearchRunner:
         Returns:
             tuple[tuple[float, float, float, float], float]: (avg_recall, avg_ndcg, p99_latency, p95_latency), cost
         """
-        log.info(f"{mp.current_process().name:14} start serial search")
+        log.info(f"{mp.current_process().name:14} Starting serial search")
         if self.test_data is None:
             msg = "empty test_data"
             raise RuntimeError(msg)

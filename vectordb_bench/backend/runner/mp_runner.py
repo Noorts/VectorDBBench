@@ -133,7 +133,7 @@ class MultiProcessingSearchRunner:
 
                         with cond:
                             cond.notify_all()
-                            log.info(f"Syncing all processes and started concurrent search, concurrency={conc}")
+                            log.info(f"Synced all processes and started concurrent search, concurrency={conc}")
 
                         start = time.perf_counter()
                         all_count = sum([r.result()[0] for r in future_iter])
@@ -264,7 +264,7 @@ class MultiProcessingSearchRunner:
 
                         with cond:
                             cond.notify_all()
-                            log.info(f"Syncing all processes and started concurrent search, concurrency={conc}")
+                            log.info(f"Synced all processes and started concurrent search, concurrency={conc}")
 
                         start = time.perf_counter()
                         res = [r.result() for r in future_iter]
