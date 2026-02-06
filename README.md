@@ -2,29 +2,69 @@
 
 ## Install
 
-```sh
-uv venv
-```
+1. Install uv using the [installation instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
-```sh
-source .venv/bin/activate
-```
+2. Create a virtual environment.
 
-```sh
-uv pip install -e '.[duckdb]'
-```
+    ```sh
+    uv venv
+    ```
 
-```sh
-vectordbbench duckdb --help
-```
+3. Activate the environment (make sure you always activate this environment when you open a new terminal session and want to benchmark).
 
-```sh
-vectordbbench duckdbpdxearch --help
-```
+    ```sh
+    source .venv/bin/activate
+    ```
+
+4. Install VectorDBBench and the DuckDB clients. Use the `-e` editable mode during development.
+
+    ```sh
+    uv pip install '.[duckdb]'
+    ```
+
+    ```sh
+    uv pip install -e '.[duckdb]'
+    ```
+
+5. The clients are now ready to use for benchmarking!
+
+    ```sh
+    vectordbbench duckdb --help
+    ```
+
+    ```sh
+    vectordbbench duckdbpdxearch --help
+    ```
+
+## Benchmark
+
+1. Set up a `.env` file.
+
+    ```ini
+    AWS_S3_URL=<ask Noorts>
+    AWS_S3_REGION=eu-central-1
+    LOG_LEVEL=DEBUG
+    NUM_PER_BATCH=122880
+    ```
+
+2. For example, run a benchmark using the OpenAI dataset using plain DuckDB or using the DuckDB PDXearch extension.
+
+    ```sh
+    vectordbbench duckdb --case-type Performance1536D999K --duckdb-threads 10 --k 10 --num-concurrency 1
+    ```
+
+    ```sh
+    vectordbbench duckdbpdxearch --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance1536D999K --duckdb-threads 10 --n-probe 28 --k 10 --num-concurrency 1
+    ```
+
 
 ## Changes
 
-DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and a client to benchmark DuckDB's PDXearch extension (`duckdbpdxearch`).
+- **New DuckDB clients**: DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and a client to benchmark DuckDB's PDXearch extension (`duckdbpdxearch`).
+
+- **New datasets**: We add new datasets. These are downloaded from a private repository.
+
+- **Download progress**: We've improved the download progress indicator, displaying progress at the byte level instead of file level.
 
 # VectorDBBench(VDBBench): A Benchmark Tool for VectorDB
 
@@ -242,7 +282,7 @@ Options:
 
   --ondisk                        Ondisk mode with binary quantization(32x compression)
   --oversample-factor             Controls the degree of oversampling applied to minority classes in imbalanced datasets to improve model performance by balancing class distributions.(default 1.0)
-  
+
 
   # Quantization Type
   --quantization-type TEXT        which type of quantization to use valid values [fp32, fp16, bq]
@@ -311,13 +351,13 @@ Options:
   # Connection
   --cloud-id TEXT                 Elastic Cloud ID  [required]
   --password TEXT                 Elastic Cloud password  [required]
-  
+
   # HNSW Index Parameters
   --m INTEGER                     HNSW M parameter  [default: 16]
   --ef-construction INTEGER       HNSW efConstruction parameter  [default: 100]
   --num-candidates INTEGER        Number of candidates for search  [default: 100]
   --element-type [float|byte]     Element type for vectors (float: 4 bytes, byte: 1 byte)  [default: float]
-  
+
   # Index Configuration
   --number-of-shards INTEGER      Number of shards  [default: 1]
   --number-of-replicas INTEGER    Number of replicas  [default: 0]
@@ -328,7 +368,7 @@ Options:
   --use-routing BOOLEAN           Whether to use routing  [default: False]
   --use-rescore BOOLEAN           Whether to use rescore  [default: False]
   --oversample-ratio FLOAT        Oversample ratio for rescore  [default: 2.0]
-  
+
   # Common Options
   --case-type [CapacityDim128|CapacityDim960|Performance768D100M|...]
                                   Case type
