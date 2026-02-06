@@ -63,7 +63,7 @@
     ```ini
     AWS_S3_URL=<ask Noorts>
     AWS_S3_REGION=eu-central-1
-    LOG_LEVEL=DEBUG
+    LOG_LEVEL=INFO
     NUM_PER_BATCH=122880
     ```
 
