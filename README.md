@@ -70,17 +70,17 @@
 2. For example, run a benchmark using the OpenAI dataset using plain DuckDB or using the DuckDB PDXearch extension.
 
     ```sh
-    vectordbbench duckdb --case-type Performance1536D999K --duckdb-threads 10 --k 10 --num-concurrency 1
+    vectordbbench duckdb --skip-search-concurrent --case-type Performance1536D999K --duckdb-threads 10 --k 10
     ```
 
     ```sh
-    vectordbbench duckdbpdxearch --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance1536D999K --duckdb-threads 10 --n-probe 28 --k 10 --num-concurrency 1
+    vectordbbench duckdbpdxearch --skip-search-concurrent --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance1536D999K --duckdb-threads 10 --n-probe 28 --k 10
     ```
 
 3. After running the benchmark commands the SQL table and index will have been created. In the follow up invocations you can skip creating the table, loading the data, and creating the index (for VSS) using `--skip-drop-old` and `--skip-load`.
 
     ```sh
-    vectordbbench duckdb --case-type Performance1536D999K --duckdb-threads 10 --k 10 --num-concurrency 1 --skip-drop-old --skip-load
+    vectordbbench duckdb --skip-search-concurrent --case-type Performance1536D999K --duckdb-threads 10 --k 10 --skip-drop-old --skip-load
     ```
 
 ## New Benchmark Cases
