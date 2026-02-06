@@ -68,6 +68,11 @@ class DuckDB(VectorDB):
             with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
                 self._drop_index()
                 self._create_index()
+
+            # Warmup query to ensure the index is loaded.
+            self.prepare_filter(Filter(type=FilterOp.NonFilter))
+            self.search_embedding([0.0] * self.dims)
+
         try:
             yield
         finally:
