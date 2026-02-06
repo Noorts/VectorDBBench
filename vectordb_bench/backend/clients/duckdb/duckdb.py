@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from typing import Generator, Any
 
+import logging
 import pandas as pd
 
 from ..api import VectorDB, FilterOp, Filter, IndexType
@@ -8,6 +9,8 @@ import duckdb
 from .config import CreateIndex
 from .duckdb_utils import SetDuckDBThreadsTo
 from .config import DuckDBConnectionConfigDict, DuckDBCaseConfig
+
+log = logging.getLogger(__name__)
 
 
 class DuckDB(VectorDB):
@@ -99,10 +102,13 @@ class DuckDB(VectorDB):
         )
 
     def _load_pdxearch_extension(self, extension_path: str):
-        self.conn.execute(f"LOAD '{extension_path}'")
+        load_extension_sql = f"LOAD '{extension_path}'"
+        log.debug(f"Loading PDXearch extension from {extension_path}")
+        self.conn.execute(load_extension_sql)
         self.conn.commit()
 
     def _load_vss_extension(self):
+        log.debug("Installing and loading VSS extension")
         self.conn.execute("INSTALL vss")
         self.conn.execute("LOAD vss")
         self.conn.commit()
@@ -115,23 +121,25 @@ class DuckDB(VectorDB):
         assert self.dims == dims
 
         create_table_sql = (
-            f"""CREATE TABLE {self.conn_config['table_name']}
-                ({self.id_column_name} INTEGER,
-                {self.embedding_column_name} {self.embedding_column_element_type}[{self.dims}],
-                {self.predicate_column_name} VARCHAR(64));"""
+            f"CREATE TABLE {self.conn_config['table_name']} "
+            + f"({self.id_column_name} INTEGER, "
+            + f"{self.embedding_column_name} {self.embedding_column_element_type}[{self.dims}], "
+            + f"{self.predicate_column_name} VARCHAR(64));"
             if self.with_predicate_column
-            else f"""CREATE TABLE {self.conn_config['table_name']}
-                ({self.id_column_name} INTEGER,
-                {self.embedding_column_name} {self.embedding_column_element_type}[{self.dims}]);"""
+            else f"CREATE TABLE {self.conn_config['table_name']} "
+            + f"({self.id_column_name} INTEGER, "
+            + f"{self.embedding_column_name} {self.embedding_column_element_type}[{self.dims}]);"
         )
-
+        log.debug(f"Creating table: {create_table_sql}")
         self.conn.execute(create_table_sql)
         self.conn.commit()
 
     def _drop_table(self):
         assert self.conn is not None
 
-        self.conn.execute(f"DROP TABLE IF EXISTS {self.conn_config['table_name']}")
+        drop_table_sql = f"DROP TABLE IF EXISTS {self.conn_config['table_name']}"
+        log.debug(f"Dropping table: {drop_table_sql}")
+        self.conn.execute(drop_table_sql)
         self.conn.commit()
 
     # ----------------------------------
@@ -140,7 +148,9 @@ class DuckDB(VectorDB):
     def _drop_index(self):
         assert self.conn is not None
 
-        self.conn.execute(f"DROP INDEX IF EXISTS {self.case_config.index_name}")
+        drop_index_sql = f"DROP INDEX IF EXISTS {self.case_config.index_name}"
+        log.debug(f"Dropping index: {drop_index_sql}")
+        self.conn.execute(drop_index_sql)
         self.conn.commit()
 
     def _format_sql_value(self, value) -> str:
@@ -158,6 +168,7 @@ class DuckDB(VectorDB):
         if self.case_config.index == IndexType.PDXEARCH:
             res = self.conn.execute(f"SELECT COUNT(*) FROM {self.conn_config['table_name']}")
             if res.fetchone()[0] == 0:
+                log.debug("Table has not been populated yet, skipping index creation")
                 return
 
         # https://duckdb.org/docs/stable/core_extensions/vss#persistence
@@ -173,8 +184,11 @@ class DuckDB(VectorDB):
             ]
         )
         with_clause = f"WITH ({index_options})" if index_options else ""
-        create_index_sql = f"""CREATE INDEX {index_param['index_name']} ON {self.conn_config['table_name']}
-                USING {index_param['index_type']} ({self.embedding_column_name}) {with_clause}"""
+        create_index_sql = (
+            f"CREATE INDEX {index_param['index_name']} ON {self.conn_config['table_name']}"
+            + f" USING {index_param['index_type']} ({self.embedding_column_name}) {with_clause}"
+        )
+        log.debug(f"Creating index: {create_index_sql}")
         self.conn.execute(create_index_sql)
         self.conn.commit()
 
@@ -197,6 +211,8 @@ class DuckDB(VectorDB):
         assert self.conn is not None
         if self.with_predicate_column:
             assert labels_data is not None
+
+        log.debug(f"Inserting {len(embeddings)} embeddings into table {self.conn_config['table_name']}")
 
         try:
             df = pd.DataFrame(
