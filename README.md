@@ -8,21 +8,31 @@
 
 ## Install
 
-1. Install uv using the [installation instructions](https://docs.astral.sh/uv/getting-started/installation/).
+1. Install `uv` using the [installation instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
-2. Create a virtual environment.
+2. Clone this repository.
+
+    ```sh
+    git clone https://github.com/Noorts/VectorDBBench.git
+    ```
+
+    ```sh
+    cd VectorDBBench
+    ```
+
+3. Create a virtual environment.
 
     ```sh
     uv venv
     ```
 
-3. Activate the environment (make sure you always activate this environment when you open a new terminal session and want to benchmark).
+4. Activate the environment (make sure you always activate this environment when you open a new terminal session and want to run a benchmark).
 
     ```sh
     source .venv/bin/activate
     ```
 
-4. Install VectorDBBench and all DuckDB clients. Use the `-e` editable mode during development.
+5. Install VectorDBBench and all DuckDB clients. Use the `-e` editable mode during development.
 
     ```sh
     uv pip install '.[duckdb]'
@@ -32,7 +42,7 @@
     uv pip install -e '.[duckdb]'
     ```
 
-5. The clients are now ready to use for benchmarking!
+6. The clients are now ready to use for benchmarking!
 
     ```sh
     vectordbbench duckdb --help
@@ -73,6 +83,11 @@
     vectordbbench duckdb --case-type Performance1536D999K --duckdb-threads 10 --k 10 --num-concurrency 1 --skip-drop-old --skip-load
     ```
 
+## New Benchmark Cases
+
+- Non-filtered search benchmarks:
+  - `Performance1024D769K`: Agnews mxbai 769.382 x 1024 (3.17 GB).
+  - `Performance1536D999K`: OpenAI 999.000 x 1536 (6.14 GB).
 
 # VectorDBBench(VDBBench): A Benchmark Tool for VectorDB
 
