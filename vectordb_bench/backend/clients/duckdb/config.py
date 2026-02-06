@@ -35,7 +35,7 @@ class DuckDBConnectionConfig(DBConfig):
 
 
 class DuckDBIndexParam(TypedDict):
-    index_type: str  # Flat, PDXearch, ...
+    index_type: str  # Flat, PDXearch, HNSW
     extension_path: str
     index_name: str
     index_options: Sequence[dict[str, Any]]
@@ -167,7 +167,85 @@ class DuckDBCasePDXearchConfig(DuckDBCaseConfig):
         }
 
 
+class DuckDBCaseVSSConfig(DuckDBCaseConfig):
+    index: IndexType = IndexType.HNSW
+    create_index: CreateIndex = CreateIndex.AFTER_INSERT
+
+    index_name: str
+    duckdb_threads_during_index_creation: int | None = None
+
+    # Index creation options
+    # Except metric. Set automatically based on dataset.
+    index_ef_construction: int | None = None
+    index_ef_search: int | None = None
+    index_M: int | None = None
+    index_M0: int | None = None
+    runtime_ef_search: int | None = None
+
+    def _metric_type_to_index_metric_type(self) -> str:
+        if self.metric_type == MetricType.L2:
+            return "l2sq"
+        if self.metric_type == MetricType.COSINE:
+            return "cosine"
+        if self.metric_type == MetricType.IP:
+            return "ip"
+        raise ValueError(f"Unsupported metric type: {self.metric_type}")
+
+    def index_param(self) -> DuckDBIndexParam:
+        index_options = [{"metric": self._metric_type_to_index_metric_type()}]
+        if self.index_ef_construction is not None:
+            index_options.append(
+                {
+                    "ef_construction": self.index_ef_construction,
+                }
+            )
+        if self.index_ef_search is not None:
+            index_options.append(
+                {
+                    "ef_search": self.index_ef_search,
+                }
+            )
+        if self.index_M is not None:
+            index_options.append(
+                {
+                    "M": self.index_M,
+                }
+            )
+        if self.index_M0 is not None:
+            index_options.append(
+                {
+                    "M0": self.index_M0,
+                }
+            )
+
+        return {
+            "index_type": self.index.value,
+            "index_name": self.index_name,
+            "index_options": index_options,
+            "duckdb_threads_during_index_creation": self.duckdb_threads_during_index_creation,
+        }
+
+    def search_param(self) -> DuckDBSearchParam:
+        return {
+            "array_distance_function_name": self._metric_type_to_function_name(),
+        }
+
+    def session_param(self) -> DuckDBSessionCommands:
+        session_options = []
+        if self.runtime_ef_search is not None:
+            session_options.append(
+                {
+                    "name": "hnsw_ef_search",
+                    "value": self.runtime_ef_search,
+                }
+            )
+        return {
+            "session_options": session_options,
+        }
+
+
 _duckdb_case_config = {
     IndexType.Flat: DuckDBCasePlainConfig,
     IndexType.PDXEARCH: DuckDBCasePDXearchConfig,
+    IndexType.HNSW: DuckDBCaseVSSConfig,
 }

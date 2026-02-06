@@ -58,20 +58,27 @@ class DuckDB(VectorDB):
         self.conn = self._create_connection(read_only=False)
         self.conn.execute("PRAGMA disable_progress_bar;")
 
-        if self.case_config.index == IndexType.PDXEARCH:
+        if self.case_config.index == IndexType.PDXEARCH or self.case_config.index == IndexType.HNSW:
             # Disable DuckDB's late materialization query optimization as the
-            # PDXearch (and VSS) extension does not handle it yet, leading to
+            # PDXearch and VSS extensions do not handle it yet, leading to
             # suboptimal query plans when K <= 50.
             self.conn.execute("SET late_materialization_max_rows = 0;")
-            self._load_extension(self.case_config.extension_path)
+
+        # Load extension
+        if self.case_config.index == IndexType.PDXEARCH:
+            self._load_pdxearch_extension(self.case_config.extension_path)
+
             # Temporary, while index persistence does not work for PDXearch.
             with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
                 self._drop_index()
                 self._create_index()
 
-            # Warmup query to ensure the index is loaded.
-            self.prepare_filter(Filter(type=FilterOp.NonFilter))
-            self.search_embedding([0.0] * self.dims)
+        if self.case_config.index == IndexType.HNSW:
+            self._load_vss_extension()
+
+        # Warmup query to ensure the table and extension index are loaded.
+        self.prepare_filter(Filter(type=FilterOp.NonFilter))
+        self.search_embedding([0.0] * self.dims)
 
         try:
             yield
@@ -91,8 +98,13 @@ class DuckDB(VectorDB):
             read_only=read_only,
         )
 
-    def _load_extension(self, extension_path: str):
+    def _load_pdxearch_extension(self, extension_path: str):
         self.conn.execute(f"LOAD '{extension_path}'")
+        self.conn.commit()
+
+    def _load_vss_extension(self):
+        self.conn.execute("INSTALL vss")
+        self.conn.execute("LOAD vss")
         self.conn.commit()
 
     # ----------------------------------
@@ -147,6 +159,10 @@ class DuckDB(VectorDB):
             res = self.conn.execute(f"SELECT COUNT(*) FROM {self.conn_config['table_name']}")
             if res.fetchone()[0] == 0:
                 return
+
+        # https://duckdb.org/docs/stable/core_extensions/vss#persistence
+        if self.case_config.index == IndexType.HNSW:
+            self.conn.execute(f"SET hnsw_enable_experimental_persistence = true;")
 
         index_param = self.case_config.index_param()
         index_options = ", ".join(

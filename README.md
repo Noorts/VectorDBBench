@@ -1,6 +1,6 @@
 # VectorDBBench DuckDB Clients
 
-- **New DuckDB clients**: DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and a client to benchmark DuckDB's PDXearch extension (`duckdbpdxearch`).
+- **New DuckDB clients**: DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and  clients to benchmark DuckDB's PDXearch extension (`duckdbpdxearch`) and VSS extension (`duckdbvss`).
 
 - **New datasets**: We add new datasets. These are automatically downloaded from a private S3 bucket.
 
@@ -22,7 +22,7 @@
     source .venv/bin/activate
     ```
 
-4. Install VectorDBBench and the DuckDB clients. Use the `-e` editable mode during development.
+4. Install VectorDBBench and all DuckDB clients. Use the `-e` editable mode during development.
 
     ```sh
     uv pip install '.[duckdb]'
@@ -40,6 +40,10 @@
 
     ```sh
     vectordbbench duckdbpdxearch --help
+    ```
+
+    ```sh
+    vectordbbench duckdbvss --help
     ```
 
 ## Benchmark
@@ -61,6 +65,12 @@
 
     ```sh
     vectordbbench duckdbpdxearch --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance1536D999K --duckdb-threads 10 --n-probe 28 --k 10 --num-concurrency 1
+    ```
+
+3. After running the benchmark commands the SQL table and index will have been created. In the follow up invocations you can skip creating the table, loading the data, and creating the index (for VSS) using `--skip-drop-old` and `--skip-load`.
+
+    ```sh
+    vectordbbench duckdb --case-type Performance1536D999K --duckdb-threads 10 --k 10 --num-concurrency 1 --skip-drop-old --skip-load
     ```
 
 
