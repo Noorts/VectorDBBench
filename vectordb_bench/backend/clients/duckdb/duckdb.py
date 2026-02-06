@@ -42,6 +42,13 @@ class DuckDB(VectorDB):
                 self._drop_index()
             self._drop_table()
             self._create_table(self.dims)
+            if (
+                self.case_config.create_index == CreateIndex.BEFORE_INSERT
+                and self.case_config.index != IndexType.PDXEARCH
+            ):
+                with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
+                    self._drop_index()
+                    self._create_index()
 
         self.conn.close()
         self.conn = None
@@ -50,19 +57,18 @@ class DuckDB(VectorDB):
     def init(self) -> Generator[None, None, None]:
         self.conn = self._create_connection(read_only=False)
         self.conn.execute("PRAGMA disable_progress_bar;")
-        # Disable DuckDB's late materialization query optimization as the
-        # PDXearch (and VSS) extension does not handle it yet, leading to
-        # suboptimal query plans when K <= 50.
-        self.conn.execute("SET late_materialization_max_rows = 0;")
 
         if self.case_config.index == IndexType.PDXEARCH:
+            # Disable DuckDB's late materialization query optimization as the
+            # PDXearch (and VSS) extension does not handle it yet, leading to
+            # suboptimal query plans when K <= 50.
+            self.conn.execute("SET late_materialization_max_rows = 0;")
             self._load_extension(self.case_config.extension_path)
-
+            # Temporary, while index persistence does not work for PDXearch.
+            with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
+                self._drop_index()
+                self._create_index()
         try:
-            # TODO: Move this to __init__ once index persistence is implemented for PDXearch.
-            if self.drop_old and self.case_config.create_index == CreateIndex.BEFORE_INSERT:
-                with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
-                    self._create_index()
             yield
         finally:
             self.conn.close()
@@ -130,6 +136,13 @@ class DuckDB(VectorDB):
     def _create_index(self):
         assert self.conn is not None
 
+        # Temporary workaround for PDXearch to make _create_index a noop if the table has not been populated yet.
+        # This can be removed and the other code refactored once PDXearch has implemented index persistence.
+        if self.case_config.index == IndexType.PDXEARCH:
+            res = self.conn.execute(f"SELECT COUNT(*) FROM {self.conn_config['table_name']}")
+            if res.fetchone()[0] == 0:
+                return
+
         index_param = self.case_config.index_param()
         index_options = ", ".join(
             [
@@ -141,13 +154,16 @@ class DuckDB(VectorDB):
         with_clause = f"WITH ({index_options})" if index_options else ""
         create_index_sql = f"""CREATE INDEX {index_param['index_name']} ON {self.conn_config['table_name']}
                 USING {index_param['index_type']} ({self.embedding_column_name}) {with_clause}"""
-        print(create_index_sql)
         self.conn.execute(create_index_sql)
         self.conn.commit()
 
     def optimize(self, data_size: int | None = None):
-        if self.case_config.create_index == CreateIndex.AFTER_INSERT:
+        if self.case_config.create_index == CreateIndex.AFTER_INSERT and self.case_config.index != IndexType.PDXEARCH:
             with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
+                # For PDXearch this is useless, as the index is not persisted, so we have to drop and recreate it before
+                # the search occurs when it calls init() again (as in between it will drop the connection). Before
+                # running this optimize it will already call init() so we skip this for PDXearch and it will be timed
+                # correctly anyway.
                 self._drop_index()
                 self._create_index()
 
