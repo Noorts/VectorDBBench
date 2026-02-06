@@ -293,7 +293,7 @@ class TestResult(BaseModel):
         if result_file.exists():
             log.warning(f"Replacing existing result with the same file_name: {result_file}")
 
-        log.info(f"write results to disk {result_file}")
+        log.info(f"Writing results to file: {result_file}")
         with pathlib.Path(result_file).open("w") as f:
             b = partial.json(exclude={"db_config": {"password", "api_key"}})
             f.write(b)

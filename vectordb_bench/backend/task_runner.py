@@ -196,7 +196,7 @@ class CaseRunner(BaseModel):
                     m.optimize_duration = round(build_dur, 4)
                     m.load_duration = round(load_dur + build_dur, 4)
                     log.info(
-                        f"Finish loading the entire dataset into VectorDB,"
+                        f"Finished loading the entire dataset into the VectorDB,"
                         f" insert_duration={load_dur}, optimize_duration={build_dur}"
                         f" load_duration(insert + optimize) = {m.load_duration}"
                     )
@@ -223,7 +223,7 @@ class CaseRunner(BaseModel):
             traceback.print_exc()
             raise e from None
         else:
-            log.info(f"Performance case got result: {m}")
+            log.info(f"Performance case result: {m}")
             return m
 
     def _run_streaming_case(self) -> Metric:
@@ -236,7 +236,7 @@ class CaseRunner(BaseModel):
             traceback.print_exc()
             raise e from None
         else:
-            log.info(f"Streaming case got result: {m}")
+            log.info(f"Streaming case result: {m}")
             return m
 
     @utils.time_it

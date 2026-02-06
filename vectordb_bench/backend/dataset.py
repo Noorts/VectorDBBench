@@ -446,7 +446,7 @@ class DataSetIterator:
 
     def _get_iter(self, file_name: str):
         p = pathlib.Path(self._ds.data_dir, file_name)
-        log.info(f"Get iterator for {p.name}")
+        log.info(f"Reading data from {p.name}")
         if not p.exists():
             msg = f"No such file: {p}"
             log.warning(msg)

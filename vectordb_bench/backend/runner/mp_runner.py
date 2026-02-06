@@ -54,7 +54,7 @@ class MultiProcessingSearchRunner:
         self.concurrency_timeout = concurrency_timeout
 
         self.test_data = test_data
-        log.debug(f"test dataset columns: {len(test_data)}")
+        log.debug(f"Number of test queries: {len(test_data)}")
 
     def search(
         self,
@@ -94,13 +94,13 @@ class MultiProcessingSearchRunner:
                 if count % 500 == 0:
                     log.debug(
                         f"({mp.current_process().name:16}) "
-                        f"search_count: {count}, latest_latency={time.perf_counter()-s}"
+                        f"search_count={count:4}, latest_latency={time.perf_counter()-s:.6f}"
                     )
 
         total_dur = round(time.perf_counter() - start_time, 4)
         log.info(
-            f"{mp.current_process().name:16} search {self.duration}s: "
-            f"actual_dur={total_dur}s, count={count}, qps in this process: {round(count / total_dur, 4):3}"
+            f"{mp.current_process().name:16} Search for {self.duration}s: "
+            f"actual_duration={total_dur}s, count={count}, qps in this process: {round(count / total_dur, 4):3}"
         )
 
         return (count, total_dur, latencies)
@@ -133,7 +133,7 @@ class MultiProcessingSearchRunner:
 
                         with cond:
                             cond.notify_all()
-                            log.info(f"Syncing all process and start concurrency search, concurrency={conc}")
+                            log.info(f"Syncing all processes and started concurrent search, concurrency={conc}")
 
                         start = time.perf_counter()
                         all_count = sum([r.result()[0] for r in future_iter])
@@ -264,7 +264,7 @@ class MultiProcessingSearchRunner:
 
                         with cond:
                             cond.notify_all()
-                            log.info(f"Syncing all process and start concurrency search, concurrency={conc}")
+                            log.info(f"Syncing all processes and started concurrent search, concurrency={conc}")
 
                         start = time.perf_counter()
                         res = [r.result() for r in future_iter]
@@ -358,13 +358,13 @@ class MultiProcessingSearchRunner:
 
                 if success_count % 500 == 0:
                     log.debug(
-                        f"({mp.current_process().name:16}) search_count: {success_count}",
+                        f"({mp.current_process().name:16}) search_count={success_count:4}",
                     )
 
         total_dur = round(time.perf_counter() - start_time, 4)
         log.debug(
-            f"{mp.current_process().name:16} search {self.duration}s: "
-            f"actual_dur={total_dur}s, count={success_count}, failed_cnt={failed_cnt}, "
+            f"{mp.current_process().name:16} Search for {self.duration}s: "
+            f"actual_duration={total_dur}s, count={success_count}, failed_cnt={failed_cnt}, "
             f"qps (successful) in this process: {round(success_count / total_dur, 4):3}",
         )
 

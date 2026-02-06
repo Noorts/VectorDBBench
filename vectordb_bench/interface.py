@@ -73,7 +73,7 @@ class BenchMarkRunner:
 
         # Generate run_id
         run_id = uuid.uuid4().hex
-        log.info(f"generated uuid for the tasks: {run_id}")
+        log.info(f"Generated uuid for the tasks: {run_id}")
         task_label = task_label if task_label else run_id
 
         self.receive_conn, send_conn = mp.Pipe()
@@ -108,7 +108,7 @@ class BenchMarkRunner:
     def _try_get_signal(self):
         while self.receive_conn and self.receive_conn.poll():
             sig, received = self.receive_conn.recv()
-            log.debug(f"Sigal received to process: {sig}, {received}")
+            log.debug(f"Signal received by process: {sig}, {received}")
             if sig == SIGNAL.ERROR:
                 self.latest_error = received
                 self._clear_running_task()
@@ -178,10 +178,10 @@ class BenchMarkRunner:
                     drop_old = False
                 num_cases = running_task.num_cases()
                 try:
-                    log.info(f"[{idx+1}/{num_cases}] start case: {runner.display()}, drop_old={drop_old}")
+                    log.info(f"[{idx+1}/{num_cases}] Started case: {runner.display()}, drop_old={drop_old}")
                     case_res.metrics = runner.run(drop_old)
                     log.info(
-                        f"[{idx+1}/{num_cases}] finish case: {runner.display()}, "
+                        f"[{idx+1}/{num_cases}] Finished case: {runner.display()}, "
                         f"result={case_res.metrics}, label={case_res.label}"
                     )
 
@@ -219,7 +219,7 @@ class BenchMarkRunner:
 
             send_conn.send((SIGNAL.SUCCESS, None))
             send_conn.close()
-            log.info(f"Success to finish task: label={running_task.task_label}, run_id={running_task.run_id}")
+            log.info(f"Finished task: label={running_task.task_label}, run_id={running_task.run_id}")
 
         except Exception as e:
             err_msg = (
@@ -249,7 +249,7 @@ class BenchMarkRunner:
 
     def _run_async(self, conn: Connection) -> bool:
         log.info(
-            f"task submitted: id={self.running_task.run_id}, {self.running_task.task_label}, "
+            f"Task submitted: id={self.running_task.run_id}, {self.running_task.task_label}, "
             f"case number: {len(self.running_task.case_runners)}"
         )
         global global_result_future

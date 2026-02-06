@@ -53,19 +53,22 @@ class SerialInsertRunner:
     def task(self) -> int:
         count = 0
         with self.db.init():
-            log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
+            log.info(
+                f"({mp.current_process().name:16}) Started inserting the embeddings in batches of {config.NUM_PER_BATCH}"
+            )
             start = time.perf_counter()
             for data_df in self.dataset:
                 all_metadata = data_df[self.dataset.data.train_id_field].tolist()
 
                 emb_np = np.stack(data_df[self.dataset.data.train_vector_field])
                 if self.normalize:
-                    log.debug("normalize the 100k train data")
+                    log.debug("Normalize the 100k train data")
                     all_embeddings = (emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis]).tolist()
                 else:
                     all_embeddings = emb_np.tolist()
                 del emb_np
-                log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
+                assert len(all_embeddings) == len(all_metadata)
+                log.debug(f"Inserting batch of {len(all_embeddings)} embeddings")
 
                 labels_data = None
                 if self.filters.type == FilterOp.StrEqual:
@@ -93,7 +96,7 @@ class SerialInsertRunner:
                     log.info(f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB")
 
             log.info(
-                f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, "
+                f"({mp.current_process().name:16}) Finished loading all embeddings into the VectorDB, "
                 f"dur={time.perf_counter() - start}"
             )
             return count
@@ -242,14 +245,14 @@ class SerialSearchRunner:
         return results
 
     def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float, float]:
-        log.info(f"{mp.current_process().name:14} start search the entire test_data to get recall and latency")
+        log.info(f"{mp.current_process().name:14} Started searching using all test queries to get recall and latency")
         with self.db.init():
             self.db.prepare_filter(self.filters)
             test_data, ground_truth = args
             ideal_dcg = get_ideal_dcg(self.k)
+            assert len(test_data) == len(ground_truth)
 
-            log.debug(f"test dataset size: {len(test_data)}")
-            log.debug(f"ground truth size: {len(ground_truth)}")
+            log.debug(f"Number of test queries: {len(test_data)}")
 
             latencies, recalls, ndcgs = [], [], []
             for idx, emb in enumerate(test_data):
@@ -272,8 +275,8 @@ class SerialSearchRunner:
 
                 if len(latencies) % 100 == 0:
                     log.debug(
-                        f"({mp.current_process().name:14}) search_count={len(latencies):3}, "
-                        f"latest_latency={latencies[-1]}, latest recall={recalls[-1]}"
+                        f"({mp.current_process().name:14}) search_count={len(latencies):4}, "
+                        f"latest_latency={latencies[-1]:.6f}, latest recall={recalls[-1]:.2f}"
                     )
 
         avg_latency = round(np.mean(latencies), 4)
@@ -283,7 +286,7 @@ class SerialSearchRunner:
         p99 = round(np.percentile(latencies, 99), 4)
         p95 = round(np.percentile(latencies, 95), 4)
         log.info(
-            f"{mp.current_process().name:14} search entire test_data: "
+            f"{mp.current_process().name:14} Benchmarked using all test queries: "
             f"cost={cost}s, "
             f"queries={len(latencies)}, "
             f"avg_recall={avg_recall}, "
