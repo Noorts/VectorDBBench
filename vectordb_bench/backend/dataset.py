@@ -289,6 +289,31 @@ class OpenAI(BaseDataset):
     ]
 
 
+# Custom datasets added by Noorts:
+
+
+class C_OpenAI(BaseDataset):
+    name: str = "C_OpenAI"
+    dim: int = 1536
+    metric_type: MetricType = MetricType.L2
+    use_shuffled: bool = False
+    with_gt: bool = True
+    _size_label: dict = {
+        999_000: SizeLabel(999_000, "MEDIUM", 2),
+    }
+
+
+class C_Agnews(BaseDataset):
+    name: str = "C_Agnews"
+    dim: int = 1024
+    metric_type: MetricType = MetricType.L2
+    use_shuffled: bool = False
+    with_gt: bool = True
+    _size_label: dict = {
+        769_382: SizeLabel(769_382, "MEDIUM", 1),
+    }
+
+
 class DatasetManager(BaseModel):
     """Download dataset if not in the local directory. Provide data for cases.
 
@@ -464,6 +489,8 @@ class Dataset(Enum):
     GLOVE = Glove
     SIFT = SIFT
     OPENAI = OpenAI
+    C_OPENAI = C_OpenAI
+    C_AGNEWS = C_Agnews
 
     def get(self, size: int) -> BaseDataset:
         return self.value(size=size)
@@ -481,6 +508,8 @@ class DatasetWithSizeType(Enum):
     OpenAISmall = "Small OpenAI (1536dim, 50K)"
     OpenAIMedium = "Medium OpenAI (1536dim, 500K)"
     OpenAILarge = "Large OpenAI (1536dim, 5M)"
+    C_OpenAIMedium = "Medium OpenAI (1536dim, 999K)"
+    C_AgnewsMedium = "Medium Agnews (1024dim, 769K)"
 
     def get_manager(self) -> DatasetManager:
         if self not in DatasetWithSizeMap:
@@ -517,4 +546,6 @@ DatasetWithSizeMap = {
     DatasetWithSizeType.OpenAISmall: Dataset.OPENAI.manager(50_000),
     DatasetWithSizeType.OpenAIMedium: Dataset.OPENAI.manager(500_000),
     DatasetWithSizeType.OpenAILarge: Dataset.OPENAI.manager(5_000_000),
+    DatasetWithSizeType.C_OpenAIMedium: Dataset.C_OPENAI.manager(999_000),
+    DatasetWithSizeType.C_AgnewsMedium: Dataset.C_AGNEWS.manager(769_382),
 }

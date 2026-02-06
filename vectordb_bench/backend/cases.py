@@ -57,6 +57,10 @@ class CaseType(Enum):
 
     NewIntFilterPerformanceCase = 400
 
+    # Custom Noorts datasets.
+    Performance1536D999K = 500
+    Performance1024D769K = 501
+
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
             return type2case.get(self)()
@@ -631,6 +635,30 @@ class LabelFilterPerformanceCase(PerformanceCase):
         return LabelFilter(label_percentage=self.label_percentage)
 
 
+class Performance1536D999K(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1536D999K
+    filter_rate: float | int | None = None
+    dataset: DatasetManager = Dataset.C_OPENAI.manager(999_000)
+    name: str = "Search Performance Test (999K Dataset, 1536 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium dataset
+    (<b>OpenAI 999K vectors</b>, 1536 dimensions) at varying parallel levels.
+    Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_DEFAULT
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_DEFAULT
+
+
+class Performance1024D769K(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1024D769K
+    filter_rate: float | int | None = None
+    dataset: DatasetManager = Dataset.C_AGNEWS.manager(769_382)
+    name: str = "Search Performance Test (769382 Dataset, 1024 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium dataset
+    (<b>Agnews 769382 vectors</b>, 1024 dimensions) at varying parallel levels.
+    Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_DEFAULT
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_DEFAULT
+
+
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
@@ -655,4 +683,7 @@ type2case = {
     CaseType.StreamingCustomDataset: StreamingCustomDataset,
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
+    # Custom Noorts cases.
+    CaseType.Performance1536D999K: Performance1536D999K,
+    CaseType.Performance1024D769K: Performance1024D769K,
 }
