@@ -11,7 +11,8 @@ env.read_env(path=".env", recurse=False)
 
 class config:
     ALIYUN_OSS_URL = "assets.zilliz.com.cn/benchmark/"
-    AWS_S3_URL = "assets.zilliz.com/benchmark/"
+    AWS_S3_URL = env.str("AWS_S3_URL", "assets.zilliz.com/benchmark/")
+    AWS_S3_REGION = env.str("AWS_S3_REGION", "us-west-2")
 
     LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
     LOG_FILE = env.str("LOG_FILE", "logs/vectordb_bench.log")
