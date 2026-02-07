@@ -61,8 +61,8 @@
 1. Set up a `.env` file.
 
     ```ini
-    AWS_S3_URL=<ask Noorts>
-    AWS_S3_REGION=eu-central-1
+    ALTERNATIVE_AWS_S3_URL=<ask Noorts>
+    ALTERNATIVE_AWS_S3_REGION=eu-central-1
     LOG_LEVEL=INFO
     NUM_PER_BATCH=122880
     ```

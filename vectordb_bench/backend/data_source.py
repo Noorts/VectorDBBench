@@ -20,8 +20,19 @@ class DatasetSource(Enum):
     S3 = "S3"
     AliyunOSS = "AliyunOSS"
 
-    def reader(self) -> DatasetReader:
+    def reader(self, alternative_s3_bucket: bool = False) -> DatasetReader:
         if self == DatasetSource.S3:
+            if alternative_s3_bucket:
+                assert (
+                    config.ALTERNATIVE_AWS_S3_URL
+                ), "The ALTERNATIVE_AWS_S3_URL environment variable is not set. The dataset you're using is stored in a private AWS S3 bucket. Please specify the bucket details. See the README."
+                assert (
+                    config.ALTERNATIVE_AWS_S3_REGION
+                ), "The ALTERNATIVE_AWS_S3_REGION environment variable is not set. The dataset you're using is stored in a private AWS S3 bucket. Please specify the bucket details. See the README."
+
+                return AwsS3Reader(
+                    remote_root=config.ALTERNATIVE_AWS_S3_URL, region_name=config.ALTERNATIVE_AWS_S3_REGION
+                )
             return AwsS3Reader()
 
         if self == DatasetSource.AliyunOSS:
@@ -164,14 +175,18 @@ class AliyunOSSReader(DatasetReader):
 
 class AwsS3Reader(DatasetReader):
     source: DatasetSource = DatasetSource.S3
-    remote_root: str = config.AWS_S3_URL
+    remote_root: str
+    region_name: str
 
-    def __init__(self):
+    def __init__(self, remote_root: str = config.AWS_S3_URL, region_name: str = "us-west-2"):
         import s3fs
+
+        self.remote_root = remote_root
+        self.region_name = region_name
 
         self.fs = s3fs.S3FileSystem(
             anon=True,
-            client_kwargs={"region_name": config.AWS_S3_REGION},
+            client_kwargs={"region_name": region_name},
         )
 
     def ls_all(self, dataset: str):

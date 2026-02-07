@@ -290,6 +290,7 @@ class OpenAI(BaseDataset):
 
 
 # Custom datasets added by Noorts:
+# These are fetched from a private AWS S3 bucket. See the README for more information.
 
 
 class C_OpenAI(BaseDataset):
@@ -312,6 +313,9 @@ class C_Agnews(BaseDataset):
     _size_label: dict = {
         769_382: SizeLabel(769_382, "MEDIUM", 1),
     }
+
+
+ALTERNATIVE_S3_DATASETS_NAMES = ["C_OpenAI", "C_Agnews"]
 
 
 class DatasetManager(BaseModel):
@@ -390,7 +394,8 @@ class DatasetManager(BaseModel):
             if self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
                 download_files.append(self.data.scalar_labels_file)
             download_files = [file for file in download_files if file is not None]
-            source.reader().read(
+
+            source.reader(alternative_s3_bucket=(self.data.name in ALTERNATIVE_S3_DATASETS_NAMES)).read(
                 dataset=self.data.dir_name.lower(),
                 files=download_files,
                 local_ds_root=self.data_dir,
