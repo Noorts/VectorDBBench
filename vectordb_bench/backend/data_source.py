@@ -21,18 +21,17 @@ class DatasetSource(Enum):
     AliyunOSS = "AliyunOSS"
 
     def reader(self, alternative_s3_bucket: bool = False) -> DatasetReader:
-        if self == DatasetSource.S3:
-            if alternative_s3_bucket:
-                assert (
-                    config.ALTERNATIVE_AWS_S3_URL
-                ), "The ALTERNATIVE_AWS_S3_URL environment variable is not set. The dataset you're using is stored in a private AWS S3 bucket. Please specify the bucket details. See the README."
-                assert (
-                    config.ALTERNATIVE_AWS_S3_REGION
-                ), "The ALTERNATIVE_AWS_S3_REGION environment variable is not set. The dataset you're using is stored in a private AWS S3 bucket. Please specify the bucket details. See the README."
+        if alternative_s3_bucket:
+            assert (
+                config.ALTERNATIVE_AWS_S3_URL
+            ), "The ALTERNATIVE_AWS_S3_URL environment variable is not set. The dataset you're using is stored in a private AWS S3 bucket. Please specify the bucket details. See the README."
+            assert (
+                config.ALTERNATIVE_AWS_S3_REGION
+            ), "The ALTERNATIVE_AWS_S3_REGION environment variable is not set. The dataset you're using is stored in a private AWS S3 bucket. Please specify the bucket details. See the README."
 
-                return AwsS3Reader(
-                    remote_root=config.ALTERNATIVE_AWS_S3_URL, region_name=config.ALTERNATIVE_AWS_S3_REGION
-                )
+            return AwsS3Reader(remote_root=config.ALTERNATIVE_AWS_S3_URL, region_name=config.ALTERNATIVE_AWS_S3_REGION)
+
+        if self == DatasetSource.S3:
             return AwsS3Reader()
 
         if self == DatasetSource.AliyunOSS:
