@@ -32,7 +32,7 @@
     source .venv/bin/activate
     ```
 
-5. Install VectorDBBench and all DuckDB clients. Use the `-e` editable mode during development.
+5. Install VectorDBBench and all DuckDB clients. Use the `-e` editable mode for VectorDBBench development.
 
     ```sh
     uv pip install '.[duckdb]'
