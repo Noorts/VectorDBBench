@@ -92,13 +92,25 @@ class DuckDBCasePlainConfig(DuckDBCaseConfig):
         return {}
 
 
-class DuckDBCasePDXearchConfig(DuckDBCaseConfig):
+class DuckDBCaseExtensionConfig(DuckDBCaseConfig):
+    index_name: str
+    duckdb_threads_during_index_creation: int | None = None
+
+    def _metric_type_to_index_metric_type(self) -> str:
+        if self.metric_type == MetricType.L2:
+            return "l2sq"
+        if self.metric_type == MetricType.COSINE:
+            return "cosine"
+        if self.metric_type == MetricType.IP:
+            return "ip"
+        raise ValueError(f"Unsupported metric type: {self.metric_type}")
+
+
+class DuckDBCasePDXearchConfig(DuckDBCaseExtensionConfig):
     index: IndexType = IndexType.PDXEARCH
     create_index: CreateIndex = CreateIndex.AFTER_INSERT
 
-    index_name: str
     extension_path: str
-    duckdb_threads_during_index_creation: int | None = None
 
     # Index creation options
     # Except metric. Set automatically based on dataset.
@@ -107,11 +119,6 @@ class DuckDBCasePDXearchConfig(DuckDBCaseConfig):
     index_normalize: bool | None = None
     index_seed: int | None = None
     runtime_n_probe: int | None = None
-
-    def _metric_type_to_index_metric_type(self) -> str:
-        if self.metric_type == MetricType.L2:
-            return "l2sq"
-        raise ValueError(f"Unsupported metric type: {self.metric_type}")
 
     def index_param(self) -> DuckDBIndexParam:
         index_options = [{"metric": self._metric_type_to_index_metric_type()}]
@@ -166,12 +173,9 @@ class DuckDBCasePDXearchConfig(DuckDBCaseConfig):
         }
 
 
-class DuckDBCaseVSSConfig(DuckDBCaseConfig):
+class DuckDBCaseVSSConfig(DuckDBCaseExtensionConfig):
     index: IndexType = IndexType.HNSW
     create_index: CreateIndex = CreateIndex.AFTER_INSERT
-
-    index_name: str
-    duckdb_threads_during_index_creation: int | None = None
 
     # Index creation options
     # Except metric. Set automatically based on dataset.
@@ -180,15 +184,6 @@ class DuckDBCaseVSSConfig(DuckDBCaseConfig):
     index_M: int | None = None
     index_M0: int | None = None
     runtime_ef_search: int | None = None
-
-    def _metric_type_to_index_metric_type(self) -> str:
-        if self.metric_type == MetricType.L2:
-            return "l2sq"
-        if self.metric_type == MetricType.COSINE:
-            return "cosine"
-        if self.metric_type == MetricType.IP:
-            return "ip"
-        raise ValueError(f"Unsupported metric type: {self.metric_type}")
 
     def index_param(self) -> DuckDBIndexParam:
         index_options = [{"metric": self._metric_type_to_index_metric_type()}]
