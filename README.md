@@ -83,6 +83,24 @@
     vectordbbench duckdb --skip-search-concurrent --case-type Performance1536D999K --duckdb-threads 10 --k 10 --skip-drop-old --skip-load
     ```
 
+4. Also consider running a filtered search (two methods shown below).
+
+    ```sh
+    vectordbbench duckdbpdxearch --skip-search-concurrent \
+      --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance1536D500K1P --duckdb-threads 10 --n-probe 28 --k 10
+    ```
+
+    ```sh
+    vectordbbench duckdbpdxearch --skip-search-concurrent \
+      --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension \
+      --case-type NewIntFilterPerformanceCase \
+      --dataset-with-size-type "Medium OpenAI (1536dim, 500K)" \
+      --filter-rate 0.5 \
+      --duckdb-threads 10 \
+      --n-probe 28 \
+      --k 10
+    ```
+
 ## New Benchmark Cases
 
 - Non-filtered search benchmarks:
