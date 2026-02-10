@@ -94,16 +94,6 @@ class DuckDBPDXearchTypedDict(DuckDBWithExtensionTypedDict):
             required=False,
         ),
     ]
-    # TODO: Improve description.
-    normalize: Annotated[
-        bool | None,
-        click.option(
-            "--normalize",
-            type=bool,
-            help="[Index creation parameter] Whether to normalize the vectors before storing them in the index.",
-            required=False,
-        ),
-    ]
     seed: Annotated[
         int | None,
         click.option("--seed", type=int, help="[Index creation parameter] Seed to use for the index.", required=False),
@@ -219,7 +209,6 @@ def DuckDBPDXearch(**parameters: Unpack[DuckDBPDXearchTypedDict]):
             duckdb_threads_during_index_creation=parameters["duckdb_threads_during_index_creation"],
             index_quantization_type=parameters["quantization_type"],
             index_n_probe=parameters["n_probe"],
-            index_normalize=parameters["normalize"],
             index_seed=parameters["seed"],
             runtime_n_probe=parameters["runtime_n_probe"],
         ),
