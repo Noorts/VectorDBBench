@@ -181,6 +181,7 @@ def DuckDB(**parameters: Unpack[DuckDBTypedDict]):
             database_name=parameters["database_name"],
             duckdb_threads=parameters["duckdb_threads"],
             table_name=parameters["table_name"],
+            db_label=parameters["db_label"],
         ),
         db_case_config=DuckDBCasePlainConfig(**parameters),
         **parameters,
@@ -202,6 +203,7 @@ def DuckDBPDXearch(**parameters: Unpack[DuckDBPDXearchTypedDict]):
             database_name=parameters["database_name"],
             table_name=parameters["table_name"],
             duckdb_threads=parameters["duckdb_threads"],
+            db_label=parameters["db_label"],
         ),
         db_case_config=DuckDBCasePDXearchConfig(
             extension_path=parameters["extension_path"],
@@ -231,6 +233,7 @@ def DuckDBVSS(**parameters: Unpack[DuckDBVSSTypedDict]):
             database_name=parameters["database_name"],
             table_name=parameters["table_name"],
             duckdb_threads=parameters["duckdb_threads"],
+            db_label=parameters["db_label"],
         ),
         db_case_config=DuckDBCaseVSSConfig(
             index_name=parameters["index_name"],
