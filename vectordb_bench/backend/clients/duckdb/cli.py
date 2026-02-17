@@ -77,9 +77,9 @@ class DuckDBPDXearchTypedDict(DuckDBWithExtensionTypedDict):
         str,
         click.option(
             "--quantization-type",
-            type=click.Choice(["F32", "SQ8"]),
-            help="[Index creation parameter] Quantization to use for the embeddings in the PDXearch index. F32 means no quantization.",
-            default="F32",
+            type=click.Choice(["f32", "u8"]),
+            help="[Index creation parameter] Quantization to use for the embeddings in the PDXearch index. f32 means no quantization.",
+            default="u8",
             show_default=True,
             required=False,
         ),
