@@ -98,10 +98,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
         log.info("Search after write - Serial search start")
         test_time = round(time.perf_counter(), 4)
         res, ssearch_dur = self.serial_search_runner.run()
-        recall, ndcg, p99_latency, p95_latency, avg_latency = res
+        recall, ndcg, p99_latency, p95_latency, avg_latency, std_latency = res
         log.info(
             f"Search after write - Serial search - recall={recall}, ndcg={ndcg}, "
-            f"p99={p99_latency}, p95={p95_latency}, avg={avg_latency}, dur={ssearch_dur:.4f}",
+            f"p99={p99_latency}, p95={p95_latency}, avg={avg_latency}, std={std_latency}, dur={ssearch_dur:.4f}",
         )
         log.info(
             f"Search after write - Conc search start, dur for each conc={self.read_dur_after_write}",
@@ -262,10 +262,10 @@ class ReadWriteRunner(MultiProcessingSearchRunner, RatedMultiThreadingInsertRunn
                 log.info(f"[{target_batch}/{total_batch}] Serial search - {perc}% start")
                 res, ssearch_dur = self.serial_search_runner.run()
                 ssearch_dur = round(ssearch_dur, 4)
-                recall, ndcg, p99_latency, p95_latency, avg_latency = res
+                recall, ndcg, p99_latency, p95_latency, avg_latency, std_latency = res
                 log.info(
                     f"[{target_batch}/{total_batch}] Serial search - {perc}% done, "
-                    f"recall={recall}, ndcg={ndcg}, p99={p99_latency}, p95={p95_latency}, avg={avg_latency}, dur={ssearch_dur}"
+                    f"recall={recall}, ndcg={ndcg}, p99={p99_latency}, p95={p95_latency}, avg={avg_latency}, std={std_latency}, dur={ssearch_dur}"
                 )
 
                 each_conc_search_dur = self.get_each_conc_search_dur(

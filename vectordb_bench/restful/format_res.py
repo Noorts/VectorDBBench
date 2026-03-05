@@ -32,6 +32,7 @@ class FormatResult(BaseModel):
     serial_qps: float = 0
     concurrent_qps: float = 0
     serial_latency_p99: float = 0
+    serial_latency_std: float = 0
     recall: float = 0
     ndcg: float = 0
     conc_num_list: list[int] = []
