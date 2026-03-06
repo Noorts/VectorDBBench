@@ -110,12 +110,19 @@ def BatchCli():
 
     for args in args_arr:
         result = runner.invoke(cli, args)
-        time.sleep(5)
+        try:
+            time.sleep(5)
 
-        from ..interface import global_result_future
+            from ..interface import global_result_future
 
-        if global_result_future:
-            wait([global_result_future])
+            if global_result_future:
+                wait([global_result_future])
+        except KeyboardInterrupt:
+            log.info("Received interrupt, stopping...")
+            from ..interface import benchmark_runner
+
+            benchmark_runner.stop_running()
+            raise SystemExit(130)
 
         if result.exception:
             log.exception(f"failed to run sub command: {args[0]}", exc_info=result.exception)

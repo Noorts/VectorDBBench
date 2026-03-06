@@ -30,6 +30,7 @@ from .models import (
 log = logging.getLogger(__name__)
 
 global_result_future: concurrent.futures.Future | None = None
+_global_executor: concurrent.futures.ProcessPoolExecutor | None = None
 
 
 class SIGNAL(Enum):
@@ -232,7 +233,7 @@ class BenchMarkRunner:
             return
 
     def _clear_running_task(self):
-        global global_result_future
+        global global_result_future, _global_executor
         global_result_future = None
 
         if self.running_task:
@@ -243,6 +244,10 @@ class BenchMarkRunner:
             self.kill_proc_tree(timeout=5)
             self.running_task = None
 
+        if _global_executor:
+            _global_executor.shutdown(wait=False, cancel_futures=True)
+            _global_executor = None
+
         if self.receive_conn:
             self.receive_conn.close()
             self.receive_conn = None
@@ -252,12 +257,12 @@ class BenchMarkRunner:
             f"Task submitted: id={self.running_task.run_id}, {self.running_task.task_label}, "
             f"case number: {len(self.running_task.case_runners)}"
         )
-        global global_result_future
-        executor = concurrent.futures.ProcessPoolExecutor(
+        global global_result_future, _global_executor
+        _global_executor = concurrent.futures.ProcessPoolExecutor(
             max_workers=1,
             mp_context=mp.get_context("spawn"),
         )
-        global_result_future = executor.submit(self._async_task_v2, self.running_task, conn)
+        global_result_future = _global_executor.submit(self._async_task_v2, self.running_task, conn)
 
         return True
 

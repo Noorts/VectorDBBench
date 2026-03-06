@@ -675,9 +675,14 @@ def run(
     log.info(f"Task:\n{pformat(task)}\n")
     if not parameters["dry_run"]:
         benchmark_runner.run([task], task_label)
-        time.sleep(5)
-        if global_result_future:
-            wait([global_result_future])
+        try:
+            time.sleep(5)
+            if global_result_future:
+                wait([global_result_future])
 
-        while benchmark_runner.has_running():
-            time.sleep(1)
+            while benchmark_runner.has_running():
+                time.sleep(1)
+        except KeyboardInterrupt:
+            log.info("Received interrupt, stopping...")
+            benchmark_runner.stop_running()
+            raise SystemExit(130)
