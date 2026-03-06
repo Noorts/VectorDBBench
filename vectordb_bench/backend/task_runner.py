@@ -318,6 +318,20 @@ class CaseRunner(BaseModel):
 
         gt_df = self.ca.dataset.gt_data
 
+        max_q = self.config.case_config.max_search_queries
+        if max_q is not None:
+            total = len(self.test_emb)
+            if max_q > total:
+                log.warning(
+                    f"max_search_queries ({max_q}) exceeds available test queries ({total}). "
+                    f"Using all {total} queries."
+                )
+            else:
+                log.info(f"Limiting search to first {max_q} of {total} test queries")
+                self.test_emb = self.test_emb[:max_q]
+                if gt_df is not None:
+                    gt_df = gt_df[:max_q]
+
         if TaskStage.SEARCH_SERIAL in self.config.stages:
             self.serial_search_runner = SerialSearchRunner(
                 db=self.db,

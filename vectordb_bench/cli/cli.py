@@ -291,6 +291,16 @@ class CommonTypedDict(TypedDict):
             help="K value for number of nearest neighbors to search",
         ),
     ]
+    max_search_queries: Annotated[
+        int,
+        click.option(
+            "--max-search-queries",
+            type=int,
+            default=None,
+            show_default=True,
+            help="Maximum number of test queries to use during search. Defaults to all available queries.",
+        ),
+    ]
     concurrency_duration: Annotated[
         int,
         click.option(
@@ -630,6 +640,7 @@ def run(
         case_config=CaseConfig(
             case_id=CaseType[parameters["case_type"]],
             k=parameters["k"],
+            max_search_queries=parameters["max_search_queries"],
             concurrency_search_config=ConcurrencySearchConfig(
                 concurrency_duration=parameters["concurrency_duration"],
                 num_concurrency=[int(s) for s in parameters["num_concurrency"]],

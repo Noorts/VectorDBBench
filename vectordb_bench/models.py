@@ -172,6 +172,7 @@ class CaseConfig(BaseModel):
     case_id: CaseType
     custom_case: dict | None = None
     k: int | None = config.K_DEFAULT
+    max_search_queries: int | None = None
     concurrency_search_config: ConcurrencySearchConfig = ConcurrencySearchConfig()
 
     '''

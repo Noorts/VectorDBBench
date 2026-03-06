@@ -245,10 +245,10 @@ class SerialSearchRunner:
         return results
 
     def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float, float, float, float]:
-        log.info(f"{mp.current_process().name:14} Started searching using all test queries to get recall and latency")
         with self.db.init():
             self.db.prepare_filter(self.filters)
             test_data, ground_truth = args
+            log.info(f"{mp.current_process().name:14} Started searching using {len(test_data)} test queries to get recall and latency")
             ideal_dcg = get_ideal_dcg(self.k)
             assert len(test_data) == len(ground_truth)
 
