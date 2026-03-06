@@ -7,6 +7,9 @@ class FilterOp(StrEnum):
     NumGE = "NumGE"  # test ">="
     StrEqual = "Label"  # test "=="
     NonFilter = "NonFilter"
+    ExactMatchInt = "ExactMatchInt"
+    RangeInt = "RangeInt"
+    ExactMatchInSet = "ExactMatchInSet"
 
 
 class Filter(BaseModel):
@@ -91,3 +94,42 @@ class LabelFilter(Filter):
     @property
     def groundtruth_file(self) -> str:
         return f"neighbors_{self.label_field}_{self.label_value}.parquet"
+
+
+class EMFilter(Filter):
+    """ExactMatch filter: number_of_sub_categories = {label} (per-query int value)"""
+
+    type: FilterOp = FilterOp.ExactMatchInt
+    field: str = "number_of_sub_categories"
+    labels_file: str = "em_labels.parquet"
+    test_attrs_file: str = "test_attrs_em.parquet"
+
+    @property
+    def groundtruth_file(self) -> str:
+        return "neighbors_em.parquet"
+
+
+class RangeFilter(Filter):
+    """Range filter: update_date BETWEEN {range_start} AND {range_end} (per-query range)"""
+
+    type: FilterOp = FilterOp.RangeInt
+    field: str = "update_date"
+    labels_file: str = "r_labels.parquet"
+    test_attrs_file: str = "test_attrs_r.parquet"
+
+    @property
+    def groundtruth_file(self) -> str:
+        return "neighbors_r.parquet"
+
+
+class EMISFilter(Filter):
+    """ExactMatchInSet filter: list_contains(main_categories, '{label}') (per-query string value)"""
+
+    type: FilterOp = FilterOp.ExactMatchInSet
+    field: str = "main_categories"
+    labels_file: str = "emis_labels.parquet"
+    test_attrs_file: str = "test_attrs_emis.parquet"
+
+    @property
+    def groundtruth_file(self) -> str:
+        return "neighbors_emis.parquet"

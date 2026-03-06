@@ -14,6 +14,7 @@ from ..models import PerformanceTimeoutError, TaskConfig, TaskStage
 from . import utils
 from .cases import Case, CaseLabel, StreamingPerformanceCase
 from .clients import DB, MetricType, api
+from .filter import FilterOp
 from .data_source import DatasetSource
 from .runner import MultiProcessingSearchRunner, ReadWriteRunner, SerialInsertRunner, SerialSearchRunner
 
@@ -122,13 +123,24 @@ class CaseRunner(BaseModel):
         if "collection_name" in db_config_dict and not collection_name:
             collection_name = db_config_dict.pop("collection_name")
 
+        # Derive predicate_column_type from filter type
+        extra_kwargs = {}
+        if collection_name:
+            extra_kwargs["collection_name"] = collection_name
+
+        filter_type = self.ca.filters.type
+        if filter_type in (FilterOp.ExactMatchInt, FilterOp.RangeInt):
+            extra_kwargs["predicate_column_type"] = "INTEGER"
+        elif filter_type == FilterOp.ExactMatchInSet:
+            extra_kwargs["predicate_column_type"] = "TEXT[]"
+
         self.db = db_cls(
             dim=self.ca.dataset.data.dim,
             db_config=db_config_dict,
             db_case_config=self.config.db_case_config,
             drop_old=drop_old,
             with_scalar_labels=self.ca.with_scalar_labels,
-            **({"collection_name": collection_name} if collection_name else {}),
+            **extra_kwargs,
         )
 
     def _pre_run(self, drop_old: bool = True):
@@ -216,7 +228,14 @@ class CaseRunner(BaseModel):
                     ) = search_results
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     search_results = self._serial_search()
-                    m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95, m.serial_latency_avg, m.serial_latency_std = search_results
+                    (
+                        m.recall,
+                        m.ndcg,
+                        m.serial_latency_p99,
+                        m.serial_latency_p95,
+                        m.serial_latency_avg,
+                        m.serial_latency_std,
+                    ) = search_results
                     if m.serial_latency_avg > 0:
                         m.serial_qps = round(1.0 / m.serial_latency_avg, 4)
 
@@ -317,6 +336,7 @@ class CaseRunner(BaseModel):
             self.test_emb = self.ca.dataset.test_data
 
         gt_df = self.ca.dataset.gt_data
+        test_attrs = self.ca.dataset.test_attrs
 
         max_q = self.config.case_config.max_search_queries
         if max_q is not None:
@@ -331,6 +351,8 @@ class CaseRunner(BaseModel):
                 self.test_emb = self.test_emb[:max_q]
                 if gt_df is not None:
                     gt_df = gt_df[:max_q]
+                if test_attrs is not None:
+                    test_attrs = test_attrs[:max_q]
 
         if TaskStage.SEARCH_SERIAL in self.config.stages:
             self.serial_search_runner = SerialSearchRunner(
@@ -339,6 +361,7 @@ class CaseRunner(BaseModel):
                 ground_truth=gt_df,
                 filters=self.ca.filters,
                 k=self.config.case_config.k,
+                test_attrs=test_attrs,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
@@ -349,6 +372,7 @@ class CaseRunner(BaseModel):
                 duration=self.config.case_config.concurrency_search_config.concurrency_duration,
                 concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
                 k=self.config.case_config.k,
+                test_attrs=test_attrs,
             )
 
     def _init_read_write_runner(self):

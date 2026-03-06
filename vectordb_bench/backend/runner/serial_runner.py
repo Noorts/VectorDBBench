@@ -76,6 +76,8 @@ class SerialInsertRunner:
                         labels_data = self.dataset.scalar_labels[self.filters.label_field][all_metadata].to_list()
                     else:
                         labels_data = data_df[self.filters.label_field].tolist()
+                elif self.filters.type in (FilterOp.ExactMatchInt, FilterOp.RangeInt, FilterOp.ExactMatchInSet):
+                    labels_data = self.dataset.scalar_labels[self.filters.field][all_metadata].to_list()
 
                 insert_count, error = self.db.insert_embeddings(
                     embeddings=all_embeddings,
@@ -220,10 +222,12 @@ class SerialSearchRunner:
         ground_truth: list[list[int]],
         k: int = 100,
         filters: Filter = non_filter,
+        test_attrs: list[dict] | None = None,
     ):
         self.db = db
         self.k = k
         self.filters = filters
+        self.test_attrs = test_attrs
 
         if isinstance(test_data[0], np.ndarray):
             self.test_data = [query.tolist() for query in test_data]
@@ -246,7 +250,8 @@ class SerialSearchRunner:
 
     def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float, float, float, float]:
         with self.db.init():
-            self.db.prepare_filter(self.filters)
+            if self.test_attrs is None:
+                self.db.prepare_filter(self.filters)
             test_data, ground_truth = args
             log.info(f"{mp.current_process().name:14} Started searching using {len(test_data)} test queries to get recall and latency")
             ideal_dcg = get_ideal_dcg(self.k)
@@ -256,6 +261,8 @@ class SerialSearchRunner:
 
             latencies, recalls, ndcgs = [], [], []
             for idx, emb in enumerate(test_data):
+                if self.test_attrs is not None:
+                    self.db.prepare_filter(self.filters, self.test_attrs[idx])
                 s = time.perf_counter()
                 try:
                     results = self._get_db_search_res(emb)

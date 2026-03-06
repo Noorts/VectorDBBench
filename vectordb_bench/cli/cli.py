@@ -193,6 +193,10 @@ def get_custom_case_config(parameters: dict) -> dict:
             "dataset_with_size_type": parameters["dataset_with_size_type"],
             "label_percentage": parameters["label_percentage"],
         }
+    elif parameters["case_type"] == "ArxivFilterPerformanceCase":
+        custom_case_config = {
+            "arxiv_filter_type": parameters["arxiv_filter_type"],
+        }
     return custom_case_config
 
 
@@ -462,6 +466,17 @@ class CommonTypedDict(TypedDict):
             "--label-percentage",
             help="Filter rate for LabelFilterPerformanceCase",
             default=0.01,
+            show_default=True,
+        ),
+    ]
+    # TODO: See if we can make this option dependent on whether the case is ArxivFilterPerformanceCase.
+    arxiv_filter_type: Annotated[
+        str,
+        click.option(
+            "--arxiv-filter-type",
+            type=click.Choice(["EM", "R", "EMIS"], case_sensitive=True),
+            help="Arxiv filter type for ArxivFilterPerformanceCase: EM (ExactMatch), R (Range), EMIS (ExactMatchInSet)",
+            default="EM",
             show_default=True,
         ),
     ]

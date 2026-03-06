@@ -21,6 +21,7 @@ class DuckDB(VectorDB):
         db_case_config: DuckDBCaseConfig,
         drop_old: bool = False,
         with_scalar_labels: bool = False,
+        predicate_column_type: str = "VARCHAR(64)",
         **kwargs,
     ):
         self.name = "DuckDB"
@@ -30,6 +31,7 @@ class DuckDB(VectorDB):
         self.case_config = db_case_config
         self.drop_old = drop_old
         self.with_predicate_column = with_scalar_labels
+        self.predicate_column_type = predicate_column_type
         self.kwargs = kwargs
 
         self.id_column_name = "id"
@@ -137,7 +139,7 @@ class DuckDB(VectorDB):
             f"CREATE TABLE {self.conn_config['table_name']} "
             + f"({self.id_column_name} INTEGER, "
             + f"{self.embedding_column_name} {self.embedding_column_element_type}[{self.dims}], "
-            + f"{self.predicate_column_name} VARCHAR(64));"
+            + f"{self.predicate_column_name} {self.predicate_column_type});"
             if self.with_predicate_column
             else f"CREATE TABLE {self.conn_config['table_name']} "
             + f"({self.id_column_name} INTEGER, "
@@ -254,15 +256,24 @@ class DuckDB(VectorDB):
         FilterOp.NonFilter,
         FilterOp.NumGE,
         FilterOp.StrEqual,
+        FilterOp.ExactMatchInt,
+        FilterOp.RangeInt,
+        FilterOp.ExactMatchInSet,
     ]
 
-    def prepare_filter(self, filters: Filter):
+    def prepare_filter(self, filters: Filter, attrs: dict | None = None):
         if filters.type == FilterOp.NonFilter:
             self.where_clause = ""
         elif filters.type == FilterOp.NumGE:
             self.where_clause = f"WHERE {self.id_column_name} >= {filters.int_value}"
         elif filters.type == FilterOp.StrEqual:
             self.where_clause = f"WHERE {self.predicate_column_name} = '{filters.label_value}'"
+        elif filters.type == FilterOp.ExactMatchInt:
+            self.where_clause = f"WHERE {self.predicate_column_name} = {attrs['label']}"
+        elif filters.type == FilterOp.RangeInt:
+            self.where_clause = f"WHERE {self.predicate_column_name} BETWEEN {attrs['range_start']} AND {attrs['range_end']}"
+        elif filters.type == FilterOp.ExactMatchInSet:
+            self.where_clause = f"WHERE list_contains({self.predicate_column_name}, '{attrs['label']}')"
         else:
             raise ValueError(f"Unsupported filter type: {filters.type}")
         return

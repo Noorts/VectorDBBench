@@ -25,6 +25,9 @@ class PgVector(VectorDB):
         FilterOp.NonFilter,
         FilterOp.NumGE,
         FilterOp.StrEqual,
+        FilterOp.ExactMatchInt,
+        FilterOp.RangeInt,
+        FilterOp.ExactMatchInSet,
     ]
 
     conn: psycopg.Connection[Any] | None = None
@@ -39,6 +42,7 @@ class PgVector(VectorDB):
         db_case_config: PgVectorIndexConfig,
         drop_old: bool = False,
         with_scalar_labels: bool = False,
+        predicate_column_type: str = "VARCHAR(64)",
         **kwargs,
     ):
         self.name = "PgVector"
@@ -47,6 +51,7 @@ class PgVector(VectorDB):
         self.connect_config = db_config["connect_config"]
         self.dim = dim
         self.with_scalar_labels = with_scalar_labels
+        self.predicate_column_type = predicate_column_type
 
         self._index_name = "pgvector_index"
         self._primary_field = "id"
@@ -396,10 +401,9 @@ class PgVector(VectorDB):
             if self.with_scalar_labels:
                 self.cursor.execute(
                     sql.SQL(
-                        """
-                        CREATE TABLE IF NOT EXISTS public.{table_name}
-                        ({primary_field} BIGINT PRIMARY KEY, embedding {table_quantization_type}({dim}), {label_field} VARCHAR(64));
-                        """,  # noqa: E501
+                        "CREATE TABLE IF NOT EXISTS public.{table_name}"
+                        " ({primary_field} BIGINT PRIMARY KEY, embedding {table_quantization_type}({dim}),"
+                        " {label_field} " + self.predicate_column_type + ");"
                     ).format(
                         table_name=sql.Identifier(self.table_name),
                         table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
@@ -445,6 +449,14 @@ class PgVector(VectorDB):
 
         index_param = self.case_config.index_param()
 
+        # Map predicate_column_type to psycopg COPY type name
+        _pct_to_copy_type = {
+            "VARCHAR(64)": "varchar",
+            "INTEGER": "int4",
+            "TEXT[]": "text[]",
+        }
+        label_copy_type = _pct_to_copy_type.get(self.predicate_column_type, "varchar")
+
         try:
             metadata_arr = np.array(metadata)
             embeddings_arr = np.array(embeddings)
@@ -476,7 +488,7 @@ class PgVector(VectorDB):
                     if index_param["table_quantization_type"] == "halfvec":
                         for i, row in enumerate(metadata_arr):
                             if self.with_scalar_labels:
-                                copy.set_types(["bigint", "halfvec", "varchar"])
+                                copy.set_types(["bigint", "halfvec", label_copy_type])
                                 copy.write_row((row, np.float16(embeddings_arr[i]), labels_data[i]))
                             else:
                                 copy.set_types(["bigint", "halfvec"])
@@ -484,7 +496,7 @@ class PgVector(VectorDB):
                     else:
                         for i, row in enumerate(metadata_arr):
                             if self.with_scalar_labels:
-                                copy.set_types(["bigint", "vector", "varchar"])
+                                copy.set_types(["bigint", "vector", label_copy_type])
                                 copy.write_row((row, embeddings_arr[i], labels_data[i]))
                             else:
                                 copy.set_types(["bigint", "vector"])
@@ -496,13 +508,19 @@ class PgVector(VectorDB):
             log.warning(f"Failed to insert data into pgvector table ({self.table_name}), error: {e}")
             return 0, e
 
-    def prepare_filter(self, filters: Filter):
+    def prepare_filter(self, filters: Filter, attrs: dict | None = None):
         if filters.type == FilterOp.NonFilter:
             self.where_clause = ""
         elif filters.type == FilterOp.NumGE:
             self.where_clause = f"WHERE {self._primary_field} >= {filters.int_value}"
         elif filters.type == FilterOp.StrEqual:
             self.where_clause = f"WHERE {self._scalar_label_field} = '{filters.label_value}'"
+        elif filters.type == FilterOp.ExactMatchInt:
+            self.where_clause = f"WHERE {self._scalar_label_field} = {attrs['label']}"
+        elif filters.type == FilterOp.RangeInt:
+            self.where_clause = f"WHERE {self._scalar_label_field} BETWEEN {attrs['range_start']} AND {attrs['range_end']}"
+        elif filters.type == FilterOp.ExactMatchInSet:
+            self.where_clause = f"WHERE '{attrs['label']}' = ANY({self._scalar_label_field})"
         else:
             msg = f"Not support Filter for PgVector - {filters}"
             raise ValueError(msg)

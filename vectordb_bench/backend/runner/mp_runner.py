@@ -45,6 +45,7 @@ class MultiProcessingSearchRunner:
         concurrencies: Iterable[int] = config.NUM_CONCURRENCY,
         duration: int = config.CONCURRENCY_DURATION,
         concurrency_timeout: int = config.CONCURRENCY_TIMEOUT,
+        test_attrs: list[dict] | None = None,
     ):
         self.db = db
         self.k = k
@@ -52,6 +53,7 @@ class MultiProcessingSearchRunner:
         self.concurrencies = concurrencies
         self.duration = duration
         self.concurrency_timeout = concurrency_timeout
+        self.test_attrs = test_attrs
 
         self.test_data = test_data
         log.debug(f"Number of test queries: {len(test_data)}")
@@ -73,13 +75,16 @@ class MultiProcessingSearchRunner:
             self.db.prepare_filter(self.filters)
 
         with self.db.init():
-            self.db.prepare_filter(self.filters)
+            if self.test_attrs is None:
+                self.db.prepare_filter(self.filters)
             num, idx = len(test_data), random.randint(0, len(test_data) - 1)
 
             start_time = time.perf_counter()
             count = 0
             latencies = []
             while time.perf_counter() < start_time + self.duration:
+                if self.test_attrs is not None:
+                    self.db.prepare_filter(self.filters, self.test_attrs[idx])
                 s = time.perf_counter()
                 try:
                     self.db.search_embedding(test_data[idx], self.k)
@@ -329,7 +334,8 @@ class MultiProcessingSearchRunner:
             cond.wait()
 
         with self.db.init():
-            self.db.prepare_filter(self.filters)
+            if self.test_attrs is None:
+                self.db.prepare_filter(self.filters)
             num, idx = len(test_data), random.randint(0, len(test_data) - 1)
 
             # Memory-efficient latency tracking
@@ -339,6 +345,8 @@ class MultiProcessingSearchRunner:
             success_count = 0
             failed_cnt = 0
             while time.perf_counter() < start_time + dur:
+                if self.test_attrs is not None:
+                    self.db.prepare_filter(self.filters, self.test_attrs[idx])
                 s = time.perf_counter()
                 try:
                     self.db.search_embedding(test_data[idx], self.k)

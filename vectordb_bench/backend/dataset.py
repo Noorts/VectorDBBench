@@ -345,6 +345,7 @@ class DatasetManager(BaseModel):
     test_data: list[list[float]] | None = None
     gt_data: list[list[int]] | None = None
     scalar_labels: pl.DataFrame | None = None
+    test_attrs: list[dict] | None = None
     train_files: list[str] = []
     reader: DatasetReader | None = None
 
@@ -400,11 +401,19 @@ class DatasetManager(BaseModel):
         if self.data.with_gt:
             gt_file, test_file = filters.groundtruth_file, self.data.test_file
 
+        # Determine extra files for per-query filter types
+        _per_query_filter_types = (FilterOp.ExactMatchInt, FilterOp.RangeInt, FilterOp.ExactMatchInSet)
+        _is_per_query_filter = filters.type in _per_query_filter_types
+
         if self.data.with_remote_resource:
             download_files = [file for file in self.train_files]
             download_files.extend([gt_file, test_file])
             if self.data.with_scalar_labels and self.data.scalar_labels_file_separated:
-                download_files.append(self.data.scalar_labels_file)
+                if _is_per_query_filter:
+                    download_files.append(filters.labels_file)
+                    download_files.append(filters.test_attrs_file)
+                elif filters.type == FilterOp.StrEqual:
+                    download_files.append(self.data.scalar_labels_file)
             download_files = [file for file in download_files if file is not None]
 
             source.reader(alternative_s3_bucket=(self.data.name in ALTERNATIVE_S3_DATASETS_NAMES)).read(
@@ -420,6 +429,13 @@ class DatasetManager(BaseModel):
             and self.data.scalar_labels_file_separated
         ):
             self.scalar_labels = self._read_file(self.data.scalar_labels_file)
+
+        # read per-query filter labels and test attrs
+        if _is_per_query_filter and self.data.with_scalar_labels:
+            labels_df = self._read_file(filters.labels_file)
+            self.scalar_labels = labels_df
+            attrs_df = self._read_file(filters.test_attrs_file)
+            self.test_attrs = attrs_df.to_dicts()
 
         if gt_file is not None and test_file is not None:
             self.test_data = self._read_file(test_file)[self.data.test_vector_field].to_list()

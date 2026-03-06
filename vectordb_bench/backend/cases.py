@@ -4,7 +4,7 @@ from enum import Enum, auto
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients.api import MetricType
-from vectordb_bench.backend.filter import Filter, FilterOp, IntFilter, LabelFilter, NewIntFilter, NonFilter, non_filter
+from vectordb_bench.backend.filter import EMFilter, EMISFilter, Filter, FilterOp, IntFilter, LabelFilter, NewIntFilter, NonFilter, RangeFilter, non_filter
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
@@ -56,6 +56,8 @@ class CaseType(Enum):
     LabelFilterPerformanceCase = 300
 
     NewIntFilterPerformanceCase = 400
+
+    ArxivFilterPerformanceCase = 600
 
     # Custom Noorts datasets.
     Performance1536D999K = 500
@@ -114,7 +116,12 @@ class Case(BaseModel):
 
     @property
     def with_scalar_labels(self) -> bool:
-        return self.filters.type == FilterOp.StrEqual
+        return self.filters.type in (
+            FilterOp.StrEqual,
+            FilterOp.ExactMatchInt,
+            FilterOp.RangeInt,
+            FilterOp.ExactMatchInSet,
+        )
 
     def check_scalar_labels(self) -> None:
         if self.with_scalar_labels and not self.dataset.data.with_scalar_labels:
@@ -660,6 +667,39 @@ class Performance1024D769K(PerformanceCase):
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_DEFAULT
 
 
+ARXIV_FILTER_MAP = {
+    "EM": EMFilter,
+    "R": RangeFilter,
+    "EMIS": EMISFilter,
+}
+
+
+class ArxivFilterCase(PerformanceCase):
+    case_id: CaseType = CaseType.ArxivFilterPerformanceCase
+    arxiv_filter_type: str  # "EM", "R", or "EMIS"
+
+    def __init__(
+        self,
+        arxiv_filter_type: str = "EM",
+        **kwargs,
+    ):
+        dataset = Dataset.C_ARXIV_FOR_FANNs.manager(1_200_000)
+        name = f"ArxivFilter-{arxiv_filter_type} - {dataset.data.full_name}"
+        description = f"ArxivForFanns filtered search ({arxiv_filter_type})"
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            arxiv_filter_type=arxiv_filter_type,
+            **kwargs,
+        )
+
+    @property
+    def filters(self) -> Filter:
+        filter_cls = ARXIV_FILTER_MAP[self.arxiv_filter_type]
+        return filter_cls()
+
+
 class Performance1024D1200K(PerformanceCase):
     case_id: CaseType = CaseType.Performance1024D1200K
     filter_rate: float | int | None = None
@@ -694,6 +734,7 @@ type2case = {
     CaseType.StreamingCustomDataset: StreamingCustomDataset,
     CaseType.NewIntFilterPerformanceCase: NewIntFilterPerformanceCase,
     CaseType.LabelFilterPerformanceCase: LabelFilterPerformanceCase,
+    CaseType.ArxivFilterPerformanceCase: ArxivFilterCase,
     # Custom Noorts cases.
     CaseType.Performance1536D999K: Performance1536D999K,
     CaseType.Performance1024D769K: Performance1024D769K,

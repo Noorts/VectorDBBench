@@ -145,11 +145,12 @@ class VectorDB(ABC):
         """Ensure that the filters are supported before testing filtering cases."""
         return filters.type in cls.supported_filter_types
 
-    def prepare_filter(self, filters: Filter):
+    def prepare_filter(self, filters: Filter, attrs: dict | None = None):
         """The vector database is allowed to pre-prepare different filter conditions
         to reduce redundancy during the testing process.
 
-        (All search tests in a case use consistent filtering conditions.)"""
+        For per-query filter types (ExactMatchInt, RangeInt, ExactMatchInSet),
+        attrs contains per-query predicate values."""
         return
 
     @abstractmethod
