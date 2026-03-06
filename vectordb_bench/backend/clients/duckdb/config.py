@@ -89,7 +89,7 @@ class DuckDBCasePlainConfig(DuckDBCaseConfig):
         }
 
     def session_param(self) -> dict:
-        return {}
+        return {"session_options": []}
 
 
 class DuckDBCaseExtensionConfig(DuckDBCaseConfig):
