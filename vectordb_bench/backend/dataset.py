@@ -315,7 +315,19 @@ class C_Agnews(BaseDataset):
     }
 
 
-ALTERNATIVE_S3_DATASETS_NAMES = ["C_OpenAI", "C_Agnews"]
+class C_ArxivForFanns(BaseDataset):
+    name: str = "C_ArxivForFanns"
+    dim: int = 1024
+    metric_type: MetricType = MetricType.L2
+    use_shuffled: bool = False
+    with_gt: bool = True
+    with_scalar_labels: bool = True
+    _size_label: dict = {
+        1_200_000: SizeLabel(1_200_000, "MEDIUM", 2),
+    }
+
+
+ALTERNATIVE_S3_DATASETS_NAMES = ["C_OpenAI", "C_Agnews", "C_ArxivForFanns"]
 
 
 class DatasetManager(BaseModel):
@@ -496,6 +508,7 @@ class Dataset(Enum):
     OPENAI = OpenAI
     C_OPENAI = C_OpenAI
     C_AGNEWS = C_Agnews
+    C_ARXIV_FOR_FANNs = C_ArxivForFanns
 
     def get(self, size: int) -> BaseDataset:
         return self.value(size=size)
@@ -515,6 +528,7 @@ class DatasetWithSizeType(Enum):
     OpenAILarge = "Large OpenAI (1536dim, 5M)"
     C_OpenAIMedium = "Medium OpenAI (1536dim, 999K)"
     C_AgnewsMedium = "Medium Agnews (1024dim, 769K)"
+    C_ArxivForFannsMedium = "Medium ArxivForFanns (1024dim, 1.2M)"
 
     def get_manager(self) -> DatasetManager:
         if self not in DatasetWithSizeMap:
@@ -553,4 +567,5 @@ DatasetWithSizeMap = {
     DatasetWithSizeType.OpenAILarge: Dataset.OPENAI.manager(5_000_000),
     DatasetWithSizeType.C_OpenAIMedium: Dataset.C_OPENAI.manager(999_000),
     DatasetWithSizeType.C_AgnewsMedium: Dataset.C_AGNEWS.manager(769_382),
+    DatasetWithSizeType.C_ArxivForFannsMedium: Dataset.C_ARXIV_FOR_FANNs.manager(1_200_000),
 }

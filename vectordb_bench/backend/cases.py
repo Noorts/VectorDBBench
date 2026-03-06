@@ -60,6 +60,7 @@ class CaseType(Enum):
     # Custom Noorts datasets.
     Performance1536D999K = 500
     Performance1024D769K = 501
+    Performance1024D1200K = 502
 
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
@@ -659,6 +660,16 @@ class Performance1024D769K(PerformanceCase):
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_DEFAULT
 
 
+class Performance1024D1200K(PerformanceCase):
+    case_id: CaseType = CaseType.Performance1024D1200K
+    filter_rate: float | int | None = None
+    dataset: DatasetManager = Dataset.C_ARXIV_FOR_FANNs.manager(1_200_000)
+    name: str = "Search Performance Test (1200000 Dataset, 1024 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium dataset
+    (<b>ArxivForFanns 1200000 vectors</b>, 1024 dimensions) at varying parallel levels.
+    Results will show index building time, recall, and maximum QPS."""
+
+
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
@@ -686,4 +697,5 @@ type2case = {
     # Custom Noorts cases.
     CaseType.Performance1536D999K: Performance1536D999K,
     CaseType.Performance1024D769K: Performance1024D769K,
+    CaseType.Performance1024D1200K: Performance1024D1200K,
 }
