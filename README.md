@@ -65,6 +65,8 @@
     ALTERNATIVE_AWS_S3_REGION=eu-central-1
     LOG_LEVEL=INFO
     NUM_PER_BATCH=122880
+    # Make sure to change this from /tmp to another directory to prevent redownloading.
+    DATASET_LOCAL_DIR="/tmp/vectordb_bench/dataset"
     ```
 
 2. For example, run a benchmark using the OpenAI dataset using plain DuckDB or using the DuckDB PDXearch extension.
