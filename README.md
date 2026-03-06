@@ -105,9 +105,20 @@
 
 ## New Benchmark Cases
 
-- Non-filtered search benchmarks:
+### Non-filtered search benchmarks
   - `Performance1024D769K`: Agnews mxbai 769.382 x 1024 (3.17 GB).
   - `Performance1536D999K`: OpenAI 999.000 x 1536 (6.14 GB).
+  - `Performance1024D1200K`: Custom arxiv-for-fanns 1.200.000 x 1024 (4.92 GB).
+
+### Filtered search benchmark
+We introduce a custom arxiv-for-fanns filtered search workload. This is based on the paper by Iff et al. 2025 ([arxiv.org/abs/2507.21989](http://arxiv.org/abs/2507.21989)).
+
+The new `ArxivFilterPerformanceCase` comes with three filter types: exact match (EM), range (R), and exact match in set (EMIS). Use the `--arxiv-filter-type` option to specify the filter workload to run, as shown below.
+
+```sh
+vectordbbench duckdbpdxearch --skip-search-concurrent \
+  --extension-path <full path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --k 10 --case-type ArxivFilterPerformanceCase --arxiv-filter-type EM
+```
 
 # VectorDBBench(VDBBench): A Benchmark Tool for VectorDB
 
