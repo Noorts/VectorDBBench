@@ -228,7 +228,14 @@ class CaseRunner(BaseModel):
                     ) = search_results
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     search_results = self._serial_search()
-                    m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95, m.serial_latency_avg = search_results
+                    (
+                        m.recall,
+                        m.ndcg,
+                        m.serial_latency_p99,
+                        m.serial_latency_p95,
+                        m.serial_latency_avg,
+                        m.serial_latencies,
+                    ) = search_results
                     if m.serial_latency_avg > 0:
                         m.serial_qps = round(1.0 / m.serial_latency_avg, 4)
 
@@ -270,12 +277,12 @@ class CaseRunner(BaseModel):
         finally:
             runner = None
 
-    def _serial_search(self) -> tuple[float, float, float, float, float]:
+    def _serial_search(self) -> tuple[float, float, float, float, float, list[float]]:
         """Performance serial tests, search the entire test data once,
         calculate the recall, serial_latency_p99, serial_latency_p95, serial_latency_avg
 
         Returns:
-            tuple[float, float, float, float, float]: recall, ndcg, serial_latency_p99, serial_latency_p95, serial_latency_avg
+            tuple[float, float, float, float, float, list[float]]: recall, ndcg, serial_latency_p99, serial_latency_p95, serial_latency_avg, serial_latencies
         """
         try:
             results, _ = self.serial_search_runner.run()
@@ -336,8 +343,7 @@ class CaseRunner(BaseModel):
             total = len(self.test_emb)
             if max_q > total:
                 log.warning(
-                    f"max_search_queries ({max_q}) exceeds available test queries ({total}). "
-                    f"Using all {total} queries."
+                    f"max_search_queries ({max_q}) exceeds available test queries ({total}). Using all {total} queries."
                 )
             else:
                 log.info(f"Limiting search to first {max_q} of {total} test queries")

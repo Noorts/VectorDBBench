@@ -248,7 +248,7 @@ class SerialSearchRunner:
 
         return results
 
-    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float, float, float]:
+    def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float, float, float, list[float]]:
         with self.db.init():
             if self.test_attrs is None:
                 self.db.prepare_filter(self.filters)
@@ -294,6 +294,7 @@ class SerialSearchRunner:
         cost = round(np.sum(latencies), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         p95 = round(np.percentile(latencies, 95), 4)
+        serial_latencies = [round(lat, 9) for lat in latencies]
         log.info(
             f"{mp.current_process().name:14} Benchmarked using all test queries: "
             f"cost={cost}s, "
@@ -304,15 +305,15 @@ class SerialSearchRunner:
             f"p99={p99}, "
             f"p95={p95}"
         )
-        return (avg_recall, avg_ndcg, p99, p95, avg_latency)
+        return (avg_recall, avg_ndcg, p99, p95, avg_latency, serial_latencies)
 
-    def _run_in_subprocess(self) -> tuple[float, float, float, float, float]:
+    def _run_in_subprocess(self) -> tuple[float, float, float, float, float, list[float]]:
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self.search, (self.test_data, self.ground_truth))
             return future.result()
 
     @utils.time_it
-    def run(self) -> tuple[float, float, float, float, float]:
+    def run(self) -> tuple[float, float, float, float, float, list[float]]:
         log.info(f"{mp.current_process().name:14} Starting serial search")
         if self.test_data is None:
             msg = "empty test_data"
@@ -321,11 +322,11 @@ class SerialSearchRunner:
         return self._run_in_subprocess()
 
     @utils.time_it
-    def run_with_cost(self) -> tuple[tuple[float, float, float, float, float], float]:
+    def run_with_cost(self) -> tuple[tuple[float, float, float, float, float, list[float]], float]:
         """
         Search all test data in serial.
         Returns:
-            tuple[tuple[float, float, float, float, float], float]: (avg_recall, avg_ndcg, p99_latency, p95_latency, avg_latency), cost
+            tuple[tuple[float, float, float, float, float, list[float]], float]: (avg_recall, avg_ndcg, p99_latency, p95_latency, avg_latency, serial_latencies), cost
         """
         log.info(f"{mp.current_process().name:14} Starting serial search")
         if self.test_data is None:

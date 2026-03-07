@@ -363,6 +363,14 @@ class TestResult(BaseModel):
                     else:
                         # Default to 0 for older result files that don't have P95 data
                         case_result["metrics"]["serial_latency_p95"] = 0.0
+
+                    # Handle serial_latencies for backward compatibility with existing result files
+                    if "serial_latencies" in case_result["metrics"]:
+                        case_result["metrics"]["serial_latencies"] = [
+                            lat * 1000 for lat in case_result["metrics"]["serial_latencies"]
+                        ]
+                    else:
+                        case_result["metrics"]["serial_latencies"] = []
             return TestResult.validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):
