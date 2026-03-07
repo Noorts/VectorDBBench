@@ -296,8 +296,8 @@ class TestResult(BaseModel):
 
         log.info(f"Writing results to file: {result_file}")
         with pathlib.Path(result_file).open("w") as f:
-            b = partial.json(exclude={"db_config": {"password", "api_key"}})
-            f.write(b)
+            unformatted = partial.json(exclude={"db_config": {"password", "api_key"}})
+            f.write(ujson.dumps(ujson.loads(unformatted), indent=4))
 
     def get_case_config(case_config: CaseConfig) -> dict[CaseConfig]:
         if case_config["case_id"] in {6, 7, 8, 9, 12, 13, 14, 15}:
