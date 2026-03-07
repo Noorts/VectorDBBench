@@ -24,7 +24,6 @@ class Metric:
     serial_latency_p99: float = 0.0
     serial_latency_p95: float = 0.0
     serial_latency_avg: float = 0.0
-    serial_latency_std: float = 0.0
     recall: float = 0.0
     ndcg: float = 0.0
     conc_num_list: list[int] = field(default_factory=list)

@@ -228,14 +228,7 @@ class CaseRunner(BaseModel):
                     ) = search_results
                 if TaskStage.SEARCH_SERIAL in self.config.stages:
                     search_results = self._serial_search()
-                    (
-                        m.recall,
-                        m.ndcg,
-                        m.serial_latency_p99,
-                        m.serial_latency_p95,
-                        m.serial_latency_avg,
-                        m.serial_latency_std,
-                    ) = search_results
+                    m.recall, m.ndcg, m.serial_latency_p99, m.serial_latency_p95, m.serial_latency_avg = search_results
                     if m.serial_latency_avg > 0:
                         m.serial_qps = round(1.0 / m.serial_latency_avg, 4)
 
@@ -277,12 +270,12 @@ class CaseRunner(BaseModel):
         finally:
             runner = None
 
-    def _serial_search(self) -> tuple[float, float, float, float, float, float]:
+    def _serial_search(self) -> tuple[float, float, float, float, float]:
         """Performance serial tests, search the entire test data once,
-        calculate the recall, serial_latency_p99, serial_latency_p95, serial_latency_avg, serial_latency_std
+        calculate the recall, serial_latency_p99, serial_latency_p95, serial_latency_avg
 
         Returns:
-            tuple[float, float, float, float, float, float]: recall, ndcg, serial_latency_p99, serial_latency_p95, serial_latency_avg, serial_latency_std
+            tuple[float, float, float, float, float]: recall, ndcg, serial_latency_p99, serial_latency_p95, serial_latency_avg
         """
         try:
             results, _ = self.serial_search_runner.run()
