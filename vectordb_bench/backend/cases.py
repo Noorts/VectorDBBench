@@ -4,7 +4,18 @@ from enum import Enum, auto
 
 from vectordb_bench import config
 from vectordb_bench.backend.clients.api import MetricType
-from vectordb_bench.backend.filter import EMFilter, EMISFilter, Filter, FilterOp, IntFilter, LabelFilter, NewIntFilter, NonFilter, RangeFilter, non_filter
+from vectordb_bench.backend.filter import (
+    EMFilter,
+    EMISFilter,
+    Filter,
+    FilterOp,
+    IntFilter,
+    LabelFilter,
+    NewIntFilter,
+    NonFilter,
+    RangeFilter,
+    non_filter,
+)
 from vectordb_bench.base import BaseModel
 from vectordb_bench.frontend.components.custom.getCustomConfig import CustomDatasetConfig
 
@@ -63,6 +74,7 @@ class CaseType(Enum):
     Performance1536D999K = 500
     Performance1024D769K = 501
     Performance1024D1200K = 502
+    Performance128D4999K = 503
 
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
@@ -710,6 +722,16 @@ class Performance1024D1200K(PerformanceCase):
     Results will show index building time, recall, and maximum QPS."""
 
 
+class Performance128D4999K(PerformanceCase):
+    case_id: CaseType = CaseType.Performance128D4999K
+    filter_rate: float | int | None = None
+    dataset: DatasetManager = Dataset.C_SIFT.manager(4_999_000)
+    name: str = "Search Performance Test (4999K Dataset, 128 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium 4999K dataset
+    (<b>SIFT 4999K vectors</b>, 128 dimensions), at varying parallel levels. Results will show index building time,
+    recall, and maximum QPS."""
+
+
 type2case = {
     CaseType.CapacityDim960: CapacityDim960,
     CaseType.CapacityDim128: CapacityDim128,
@@ -739,4 +761,5 @@ type2case = {
     CaseType.Performance1536D999K: Performance1536D999K,
     CaseType.Performance1024D769K: Performance1024D769K,
     CaseType.Performance1024D1200K: Performance1024D1200K,
+    CaseType.Performance128D4999K: Performance128D4999K,
 }

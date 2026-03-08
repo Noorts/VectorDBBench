@@ -327,7 +327,18 @@ class C_ArxivForFanns(BaseDataset):
     }
 
 
-ALTERNATIVE_S3_DATASETS_NAMES = ["C_OpenAI", "C_Agnews", "C_ArxivForFanns"]
+class C_SIFT(BaseDataset):
+    name: str = "C_SIFT"
+    dim: int = 128
+    metric_type: MetricType = MetricType.L2
+    use_shuffled: bool = False
+    with_gt: bool = True
+    _size_label: dict = {
+        4_999_000: SizeLabel(4_999_000, "MEDIUM", 1),
+    }
+
+
+ALTERNATIVE_S3_DATASETS_NAMES = ["C_OpenAI", "C_Agnews", "C_ArxivForFanns", "C_SIFT"]
 
 
 class DatasetManager(BaseModel):
@@ -525,6 +536,7 @@ class Dataset(Enum):
     C_OPENAI = C_OpenAI
     C_AGNEWS = C_Agnews
     C_ARXIV_FOR_FANNs = C_ArxivForFanns
+    C_SIFT = C_SIFT
 
     def get(self, size: int) -> BaseDataset:
         return self.value(size=size)
