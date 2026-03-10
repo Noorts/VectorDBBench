@@ -70,9 +70,19 @@ class PgVectorTypedDict(CommonTypedDict):
         click.option(
             "--max-parallel-workers",
             type=int,
-            help="Sets the maximum number of parallel processes per maintenance operation (index creation). "
-            "This will set the parameters: max_parallel_maintenance_workers and"
-            " max_parallel_workers on the session and user, and parallel_workers on the table",
+            help="Sets the maximum number of parallel workers. "
+            "This will set max_parallel_workers on the session and user, and parallel_workers on the table.",
+            required=False,
+        ),
+    ]
+    max_parallel_maintenance_workers: Annotated[
+        int | None,
+        click.option(
+            "--max-parallel-maintenance-workers",
+            type=int,
+            help="Sets the maximum number of parallel maintenance workers (index creation). "
+            "This will set max_parallel_maintenance_workers on the session and user. "
+            "If not set, defaults to the value of --max-parallel-workers.",
             required=False,
         ),
     ]
@@ -156,6 +166,7 @@ def PgVectorIVFFlat(
             probes=parameters["probes"],
             maintenance_work_mem=parameters["maintenance_work_mem"],
             max_parallel_workers=parameters["max_parallel_workers"],
+            max_parallel_maintenance_workers=parameters["max_parallel_maintenance_workers"],
             quantization_type=parameters["quantization_type"],
             table_quantization_type=parameters["table_quantization_type"],
             reranking=parameters["reranking"],
@@ -193,6 +204,7 @@ def PgVectorHNSW(
             ef_search=parameters["ef_search"],
             maintenance_work_mem=parameters["maintenance_work_mem"],
             max_parallel_workers=parameters["max_parallel_workers"],
+            max_parallel_maintenance_workers=parameters["max_parallel_maintenance_workers"],
             quantization_type=parameters["quantization_type"],
             table_quantization_type=parameters["table_quantization_type"],
             reranking=parameters["reranking"],

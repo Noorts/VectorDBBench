@@ -49,6 +49,7 @@ class PgVectorIndexParam(TypedDict):
     index_creation_with_options: Sequence[dict[str, Any]]
     maintenance_work_mem: str | None
     max_parallel_workers: int | None
+    max_parallel_maintenance_workers: int | None
 
 
 class PgVectorSearchParam(TypedDict):
@@ -180,6 +181,7 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     index: IndexType = IndexType.ES_IVFFlat
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
+    max_parallel_maintenance_workers: int | None = None
     quantization_type: str | None = None
     table_quantization_type: str | None
     reranking: bool | None = None
@@ -200,6 +202,7 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
             "index_creation_with_options": self._optionally_build_with_options(index_parameters),
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
+            "max_parallel_maintenance_workers": self.max_parallel_maintenance_workers,
             "quantization_type": self.quantization_type,
             "table_quantization_type": self.table_quantization_type,
         }
@@ -230,6 +233,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
     index: IndexType = IndexType.ES_HNSW
     maintenance_work_mem: str | None = None
     max_parallel_workers: int | None = None
+    max_parallel_maintenance_workers: int | None = None
     quantization_type: str | None = None
     table_quantization_type: str | None
     reranking: bool | None = None
@@ -250,6 +254,7 @@ class PgVectorHNSWConfig(PgVectorIndexConfig):
             "index_creation_with_options": self._optionally_build_with_options(index_parameters),
             "maintenance_work_mem": self.maintenance_work_mem,
             "max_parallel_workers": self.max_parallel_workers,
+            "max_parallel_maintenance_workers": self.max_parallel_maintenance_workers,
             "quantization_type": self.quantization_type,
             "table_quantization_type": self.table_quantization_type,
         }

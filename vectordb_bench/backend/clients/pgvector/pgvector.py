@@ -296,18 +296,28 @@ class PgVector(VectorDB):
             )
             self.conn.commit()
 
-        if index_param["max_parallel_workers"] is not None:
+        # Resolve effective max_parallel_maintenance_workers: use dedicated value if set,
+        # otherwise fall back to max_parallel_workers for backwards compatibility.
+        effective_maintenance_workers = (
+            index_param["max_parallel_maintenance_workers"]
+            if index_param["max_parallel_maintenance_workers"] is not None
+            else index_param["max_parallel_workers"]
+        )
+
+        if effective_maintenance_workers is not None:
             self.cursor.execute(
                 sql.SQL("SET max_parallel_maintenance_workers TO '{}';").format(
-                    index_param["max_parallel_workers"],
+                    effective_maintenance_workers,
                 ),
             )
             self.cursor.execute(
                 sql.SQL("ALTER USER {} SET max_parallel_maintenance_workers TO '{}';").format(
                     sql.Identifier(self.connect_config["user"]),
-                    index_param["max_parallel_workers"],
+                    effective_maintenance_workers,
                 ),
             )
+
+        if index_param["max_parallel_workers"] is not None:
             self.cursor.execute(
                 sql.SQL("SET max_parallel_workers TO '{}';").format(
                     index_param["max_parallel_workers"],
@@ -414,10 +424,12 @@ class PgVector(VectorDB):
                 )
             else:
                 self.cursor.execute(
-                    sql.SQL("""
+                    sql.SQL(
+                        """
                         CREATE TABLE IF NOT EXISTS public.{table_name}
                         ({primary_field} BIGINT PRIMARY KEY, embedding {table_quantization_type}({dim}));
-                        """).format(
+                        """
+                    ).format(
                         table_name=sql.Identifier(self.table_name),
                         table_quantization_type=sql.SQL(index_param["table_quantization_type"]),
                         dim=dim,
@@ -518,7 +530,9 @@ class PgVector(VectorDB):
         elif filters.type == FilterOp.ExactMatchInt:
             self.where_clause = f"WHERE {self._scalar_label_field} = {attrs['label']}"
         elif filters.type == FilterOp.RangeInt:
-            self.where_clause = f"WHERE {self._scalar_label_field} BETWEEN {attrs['range_start']} AND {attrs['range_end']}"
+            self.where_clause = (
+                f"WHERE {self._scalar_label_field} BETWEEN {attrs['range_start']} AND {attrs['range_end']}"
+            )
         elif filters.type == FilterOp.ExactMatchInSet:
             self.where_clause = f"WHERE '{attrs['label']}' = ANY({self._scalar_label_field})"
         else:
