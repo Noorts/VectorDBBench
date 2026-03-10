@@ -361,6 +361,7 @@ class CaseRunner(BaseModel):
                 filters=self.ca.filters,
                 k=self.config.case_config.k,
                 test_attrs=test_attrs,
+                force_load_index=self.config.force_load_index,
             )
         if TaskStage.SEARCH_CONCURRENT in self.config.stages:
             self.search_runner = MultiProcessingSearchRunner(
@@ -372,6 +373,7 @@ class CaseRunner(BaseModel):
                 concurrency_timeout=self.config.case_config.concurrency_search_config.concurrency_timeout,
                 k=self.config.case_config.k,
                 test_attrs=test_attrs,
+                force_load_index=self.config.force_load_index,
             )
 
     def _init_read_write_runner(self):

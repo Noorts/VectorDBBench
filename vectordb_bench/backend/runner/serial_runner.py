@@ -223,11 +223,13 @@ class SerialSearchRunner:
         k: int = 100,
         filters: Filter = non_filter,
         test_attrs: list[dict] | None = None,
+        force_load_index: bool = False,
     ):
         self.db = db
         self.k = k
         self.filters = filters
         self.test_attrs = test_attrs
+        self.force_load_index = force_load_index
 
         if isinstance(test_data[0], np.ndarray):
             self.test_data = [query.tolist() for query in test_data]
@@ -250,9 +252,18 @@ class SerialSearchRunner:
 
     def search(self, args: tuple[list, list[list[int]]]) -> tuple[float, float, float, float, float, list[float]]:
         with self.db.init():
+            test_data, ground_truth = args
+
+            # Run a dummy search query with NonFilter to force the full table and index into memory.
+            if self.force_load_index:
+                log.info(f"{mp.current_process().name:14} Running dummy search query to force table and index into memory")
+                self.db.prepare_filter(Filter(type=FilterOp.NonFilter))
+                dim = len(test_data[0])
+                self.db.search_embedding([0.0] * dim, self.k)
+
             if self.test_attrs is None:
                 self.db.prepare_filter(self.filters)
-            test_data, ground_truth = args
+
             log.info(
                 f"{mp.current_process().name:14} Started searching using {len(test_data)} test queries to get recall and latency"
             )

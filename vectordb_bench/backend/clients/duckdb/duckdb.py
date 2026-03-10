@@ -94,10 +94,6 @@ class DuckDB(VectorDB):
                 self.conn.execute(statement)
             self.conn.commit()
 
-        # Warmup query to ensure the table and extension index are loaded.
-        self.prepare_filter(Filter(type=FilterOp.NonFilter))
-        self.search_embedding([0.0] * self.dims)
-
         try:
             yield
         finally:
@@ -271,7 +267,9 @@ class DuckDB(VectorDB):
         elif filters.type == FilterOp.ExactMatchInt:
             self.where_clause = f"WHERE {self.predicate_column_name} = {attrs['label']}"
         elif filters.type == FilterOp.RangeInt:
-            self.where_clause = f"WHERE {self.predicate_column_name} BETWEEN {attrs['range_start']} AND {attrs['range_end']}"
+            self.where_clause = (
+                f"WHERE {self.predicate_column_name} BETWEEN {attrs['range_start']} AND {attrs['range_end']}"
+            )
         elif filters.type == FilterOp.ExactMatchInSet:
             self.where_clause = f"WHERE list_contains({self.predicate_column_name}, '{attrs['label']}')"
         else:

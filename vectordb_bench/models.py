@@ -226,6 +226,7 @@ class TaskConfig(BaseModel):
     db_case_config: DBCaseConfig
     case_config: CaseConfig
     stages: list[TaskStage] = ALL_TASK_STAGES
+    force_load_index: bool = False
 
     @property
     def db_name(self):

@@ -439,6 +439,16 @@ class CommonTypedDict(TypedDict):
             show_default=True,
         ),
     ]
+    force_load_index: Annotated[
+        bool,
+        click.option(
+            "--force-load-index/--skip-force-load-index",
+            type=bool,
+            default=False,
+            help="Run a dummy search query to force the table and index into memory before search",
+            show_default=True,
+        ),
+    ]
     task_label: Annotated[str, click.option("--task-label", help="Task label")]
     dataset_with_size_type: Annotated[
         str,
@@ -669,6 +679,7 @@ def run(
             parameters["search_serial"],
             parameters["search_concurrent"],
         ),
+        force_load_index=parameters["force_load_index"],
     )
     task_label = parameters["task_label"]
 

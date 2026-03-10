@@ -11,7 +11,7 @@ from multiprocessing.queues import Queue
 import numpy as np
 from hdrh.histogram import HdrHistogram
 
-from vectordb_bench.backend.filter import Filter, non_filter
+from vectordb_bench.backend.filter import Filter, FilterOp, non_filter
 
 from ... import config
 from ...models import ConcurrencySlotTimeoutError
@@ -46,6 +46,7 @@ class MultiProcessingSearchRunner:
         duration: int = config.CONCURRENCY_DURATION,
         concurrency_timeout: int = config.CONCURRENCY_TIMEOUT,
         test_attrs: list[dict] | None = None,
+        force_load_index: bool = False,
     ):
         self.db = db
         self.k = k
@@ -54,6 +55,7 @@ class MultiProcessingSearchRunner:
         self.duration = duration
         self.concurrency_timeout = concurrency_timeout
         self.test_attrs = test_attrs
+        self.force_load_index = force_load_index
 
         self.test_data = test_data
         log.debug(f"Number of test queries: {len(test_data)}")
@@ -75,8 +77,16 @@ class MultiProcessingSearchRunner:
             self.db.prepare_filter(self.filters)
 
         with self.db.init():
+            # Run a dummy search query with NonFilter to force the full table and index into memory.
+            if self.force_load_index:
+                log.info(f"{mp.current_process().name:16} Running dummy search query to force table and index into memory")
+                self.db.prepare_filter(Filter(type=FilterOp.NonFilter))
+                dim = len(test_data[0])
+                self.db.search_embedding([0.0] * dim, self.k)
+
             if self.test_attrs is None:
                 self.db.prepare_filter(self.filters)
+
             num, idx = len(test_data), random.randint(0, len(test_data) - 1)
 
             start_time = time.perf_counter()
@@ -334,8 +344,16 @@ class MultiProcessingSearchRunner:
             cond.wait()
 
         with self.db.init():
+            # Run a dummy search query with NonFilter to force the full table and index into memory.
+            if self.force_load_index:
+                log.info(f"{mp.current_process().name:16} Running dummy search query to force table and index into memory")
+                self.db.prepare_filter(Filter(type=FilterOp.NonFilter))
+                dim = len(test_data[0])
+                self.db.search_embedding([0.0] * dim, self.k)
+
             if self.test_attrs is None:
                 self.db.prepare_filter(self.filters)
+
             num, idx = len(test_data), random.randint(0, len(test_data) - 1)
 
             # Memory-efficient latency tracking
