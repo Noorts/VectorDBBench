@@ -61,9 +61,7 @@ class PgVectorTypedDict(CommonTypedDict):
             "--maintenance-work-mem",
             type=str,
             help="Sets the maximum memory to be used for maintenance operations (index creation). "
-            "Can be entered as string with unit like '64GB' or as an integer number of KB."
-            "This will set the parameters: max_parallel_maintenance_workers,"
-            " max_parallel_workers & table(parallel_workers)",
+            "Can be entered as string with unit like '64GB' or as an integer number of KB.",
             required=False,
         ),
     ]
@@ -72,7 +70,9 @@ class PgVectorTypedDict(CommonTypedDict):
         click.option(
             "--max-parallel-workers",
             type=int,
-            help="Sets the maximum number of parallel processes per maintenance operation (index creation)",
+            help="Sets the maximum number of parallel processes per maintenance operation (index creation). "
+            "This will set the parameters: max_parallel_maintenance_workers and"
+            " max_parallel_workers on the session and user, and parallel_workers on the table",
             required=False,
         ),
     ]
