@@ -686,30 +686,45 @@ ARXIV_FILTER_MAP = {
 }
 
 
+ARXIV_DATASET_ORDER_MAP = {
+    "original": Dataset.C_ARXIV_FOR_FANNs,
+    "sorted_by_update_date": Dataset.C_ARXIV_FOR_FANNs_SORTED_BY_UPDATE_DATE,
+    "randomly_shuffled": Dataset.C_ARXIV_FOR_FANNs_RANDOM,
+}
+
+ARXIV_DATASET_ORDER_SUFFIX = {
+    "original": "",
+    "sorted_by_update_date": " (sorted by update_date)",
+    "randomly_shuffled": " (randomly shuffled)",
+}
+
+
 class ArxivFilterCase(PerformanceCase):
     case_id: CaseType = CaseType.ArxivFilterPerformanceCase
     arxiv_filter_type: str  # "EM", "R", or "EMIS"
-    sorted_by_update_date: bool = False
+    arxiv_dataset_order: str = "original"  # "original", "sorted_by_update_date", or "randomly_shuffled"
 
     def __init__(
         self,
         arxiv_filter_type: str = "EM",
-        sorted_by_update_date: bool = False,
+        arxiv_dataset_order: str = "original",
         **kwargs,
     ):
-        if sorted_by_update_date:
-            dataset = Dataset.C_ARXIV_FOR_FANNs_SORTED_BY_UPDATE_DATE.manager(1_200_000)
-        else:
-            dataset = Dataset.C_ARXIV_FOR_FANNs.manager(1_200_000)
-        sorted_suffix = " (sorted by update_date)" if sorted_by_update_date else ""
-        name = f"ArxivFilter-{arxiv_filter_type} - {dataset.data.full_name}{sorted_suffix}"
-        description = f"ArxivForFanns filtered search ({arxiv_filter_type}){sorted_suffix}"
+        if arxiv_dataset_order not in ARXIV_DATASET_ORDER_MAP:
+            raise ValueError(
+                f"Invalid arxiv_dataset_order: {arxiv_dataset_order!r}. "
+                f"Expected one of: {list(ARXIV_DATASET_ORDER_MAP.keys())}"
+            )
+        dataset = ARXIV_DATASET_ORDER_MAP[arxiv_dataset_order].manager(1_200_000)
+        suffix = ARXIV_DATASET_ORDER_SUFFIX[arxiv_dataset_order]
+        name = f"ArxivFilter-{arxiv_filter_type} - {dataset.data.full_name}{suffix}"
+        description = f"ArxivForFanns filtered search ({arxiv_filter_type}){suffix}"
         super().__init__(
             name=name,
             description=description,
             dataset=dataset,
             arxiv_filter_type=arxiv_filter_type,
-            sorted_by_update_date=sorted_by_update_date,
+            arxiv_dataset_order=arxiv_dataset_order,
             **kwargs,
         )
 

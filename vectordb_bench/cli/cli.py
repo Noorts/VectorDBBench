@@ -196,7 +196,7 @@ def get_custom_case_config(parameters: dict) -> dict:
     elif parameters["case_type"] == "ArxivFilterPerformanceCase":
         custom_case_config = {
             "arxiv_filter_type": parameters["arxiv_filter_type"],
-            "sorted_by_update_date": parameters["sorted_by_update_date"],
+            "arxiv_dataset_order": parameters["arxiv_dataset_order"],
         }
     return custom_case_config
 
@@ -491,13 +491,13 @@ class CommonTypedDict(TypedDict):
             show_default=True,
         ),
     ]
-    sorted_by_update_date: Annotated[
-        bool,
+    arxiv_dataset_order: Annotated[
+        str,
         click.option(
-            "--sorted-by-update-date/--no-sorted-by-update-date",
-            type=bool,
-            help="Use the update_date-sorted variant of the Arxiv dataset for ArxivFilterPerformanceCase",
-            default=False,
+            "--arxiv-dataset-order",
+            type=click.Choice(["original", "sorted_by_update_date", "randomly_shuffled"], case_sensitive=True),
+            help="Row ordering variant of the Arxiv dataset for ArxivFilterPerformanceCase",
+            default="original",
             show_default=True,
         ),
     ]
