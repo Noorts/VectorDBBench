@@ -196,6 +196,7 @@ def get_custom_case_config(parameters: dict) -> dict:
     elif parameters["case_type"] == "ArxivFilterPerformanceCase":
         custom_case_config = {
             "arxiv_filter_type": parameters["arxiv_filter_type"],
+            "sorted_by_update_date": parameters["sorted_by_update_date"],
         }
     return custom_case_config
 
@@ -487,6 +488,16 @@ class CommonTypedDict(TypedDict):
             type=click.Choice(["EM", "R", "EMIS"], case_sensitive=True),
             help="Arxiv filter type for ArxivFilterPerformanceCase: EM (ExactMatch), R (Range), EMIS (ExactMatchInSet)",
             default="EM",
+            show_default=True,
+        ),
+    ]
+    sorted_by_update_date: Annotated[
+        bool,
+        click.option(
+            "--sorted-by-update-date/--no-sorted-by-update-date",
+            type=bool,
+            help="Use the update_date-sorted variant of the Arxiv dataset for ArxivFilterPerformanceCase",
+            default=False,
             show_default=True,
         ),
     ]

@@ -327,6 +327,18 @@ class C_ArxivForFanns(BaseDataset):
     }
 
 
+class C_ArxivForFannsSortedByUpdateDate(BaseDataset):
+    name: str = "C_ArxivForFannsSortedByUpdateDate"
+    dim: int = 1024
+    metric_type: MetricType = MetricType.L2
+    use_shuffled: bool = False
+    with_gt: bool = True
+    with_scalar_labels: bool = True
+    _size_label: dict = {
+        1_200_000: SizeLabel(1_200_000, "MEDIUM", 2),
+    }
+
+
 class C_SIFT(BaseDataset):
     name: str = "C_SIFT"
     dim: int = 128
@@ -338,7 +350,7 @@ class C_SIFT(BaseDataset):
     }
 
 
-ALTERNATIVE_S3_DATASETS_NAMES = ["C_OpenAI", "C_Agnews", "C_ArxivForFanns", "C_SIFT"]
+ALTERNATIVE_S3_DATASETS_NAMES = ["C_OpenAI", "C_Agnews", "C_ArxivForFanns", "C_ArxivForFannsSortedByUpdateDate", "C_SIFT"]
 
 
 class DatasetManager(BaseModel):
@@ -536,6 +548,7 @@ class Dataset(Enum):
     C_OPENAI = C_OpenAI
     C_AGNEWS = C_Agnews
     C_ARXIV_FOR_FANNs = C_ArxivForFanns
+    C_ARXIV_FOR_FANNs_SORTED_BY_UPDATE_DATE = C_ArxivForFannsSortedByUpdateDate
     C_SIFT = C_SIFT
 
     def get(self, size: int) -> BaseDataset:

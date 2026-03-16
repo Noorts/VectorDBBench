@@ -689,20 +689,27 @@ ARXIV_FILTER_MAP = {
 class ArxivFilterCase(PerformanceCase):
     case_id: CaseType = CaseType.ArxivFilterPerformanceCase
     arxiv_filter_type: str  # "EM", "R", or "EMIS"
+    sorted_by_update_date: bool = False
 
     def __init__(
         self,
         arxiv_filter_type: str = "EM",
+        sorted_by_update_date: bool = False,
         **kwargs,
     ):
-        dataset = Dataset.C_ARXIV_FOR_FANNs.manager(1_200_000)
-        name = f"ArxivFilter-{arxiv_filter_type} - {dataset.data.full_name}"
-        description = f"ArxivForFanns filtered search ({arxiv_filter_type})"
+        if sorted_by_update_date:
+            dataset = Dataset.C_ARXIV_FOR_FANNs_SORTED_BY_UPDATE_DATE.manager(1_200_000)
+        else:
+            dataset = Dataset.C_ARXIV_FOR_FANNs.manager(1_200_000)
+        sorted_suffix = " (sorted by update_date)" if sorted_by_update_date else ""
+        name = f"ArxivFilter-{arxiv_filter_type} - {dataset.data.full_name}{sorted_suffix}"
+        description = f"ArxivForFanns filtered search ({arxiv_filter_type}){sorted_suffix}"
         super().__init__(
             name=name,
             description=description,
             dataset=dataset,
             arxiv_filter_type=arxiv_filter_type,
+            sorted_by_update_date=sorted_by_update_date,
             **kwargs,
         )
 
