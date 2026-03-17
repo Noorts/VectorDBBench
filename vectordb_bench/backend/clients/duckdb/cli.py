@@ -43,6 +43,15 @@ class DuckDBTypedDict(CommonTypedDict):
             required=False,
         ),
     ]
+    use_blob_interface: Annotated[
+        bool,
+        click.option(
+            "--use-blob-interface/--no-use-blob-interface",
+            help="Use the PDXearch blob-based query interface instead of FLOAT[] literals.",
+            default=True,
+            show_default=True,
+        ),
+    ]
 
 
 class DuckDBWithExtensionTypedDict(DuckDBTypedDict):
@@ -183,7 +192,9 @@ def DuckDB(**parameters: Unpack[DuckDBTypedDict]):
             table_name=parameters["table_name"],
             db_label=parameters["db_label"],
         ),
-        db_case_config=DuckDBCasePlainConfig(**parameters),
+        db_case_config=DuckDBCasePlainConfig(
+            use_blob_interface=parameters["use_blob_interface"],
+        ),
         **parameters,
     )
 
@@ -206,6 +217,7 @@ def DuckDBPDXearch(**parameters: Unpack[DuckDBPDXearchTypedDict]):
             db_label=parameters["db_label"],
         ),
         db_case_config=DuckDBCasePDXearchConfig(
+            use_blob_interface=parameters["use_blob_interface"],
             extension_path=parameters["extension_path"],
             index_name=parameters["index_name"],
             duckdb_threads_during_index_creation=parameters["duckdb_threads_during_index_creation"],
@@ -236,6 +248,7 @@ def DuckDBVSS(**parameters: Unpack[DuckDBVSSTypedDict]):
             db_label=parameters["db_label"],
         ),
         db_case_config=DuckDBCaseVSSConfig(
+            use_blob_interface=parameters["use_blob_interface"],
             index_name=parameters["index_name"],
             duckdb_threads_during_index_creation=parameters["duckdb_threads_during_index_creation"],
             index_ef_construction=parameters["ef_construction"],

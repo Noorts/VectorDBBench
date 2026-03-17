@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from typing import Generator, Any
 
 import logging
+
 import pandas as pd
 
 from ..api import VectorDB, FilterOp, Filter, IndexType
@@ -33,6 +34,11 @@ class DuckDB(VectorDB):
         self.with_predicate_column = with_scalar_labels
         self.predicate_column_type = predicate_column_type
         self.kwargs = kwargs
+
+        if self.case_config.use_blob_interface and self.case_config.index == IndexType.HNSW:
+            raise ValueError(
+                "The blob interface is currently not supported with DuckDB VSS (HNSW). Set --no-use-blob-interface."
+            )
 
         self.id_column_name = "id"
         self.embedding_column_name = "embedding"
@@ -279,11 +285,38 @@ class DuckDB(VectorDB):
     def search_embedding(self, query: list[float], K: int = 100, **kwargs):
         array_function_name = self.case_config._metric_type_to_function_name()
 
+        if self.case_config.use_blob_interface:
+            query_vec_literal = f"pdxearch_base64_to_blob('{_encode_query_blob_base64(query)}')"
+        else:
+            query_vec_literal = f"{query}::{self.embedding_column_element_type}[{self.dims}]"
+
         # The WHERE clause is set by the `prepare_filter` method above.
         result = self.conn.execute(
             f"""SELECT {self.id_column_name} FROM {self.conn_config['table_name']} {self.where_clause}
-                ORDER BY {array_function_name}({self.embedding_column_name},{query}::{self.embedding_column_element_type}[{self.dims}])
+                ORDER BY {array_function_name}({self.embedding_column_name}, {query_vec_literal})
                 LIMIT {K};"""
         )
 
         return [int(i[0]) for i in result.fetchall()]
+
+
+_BLOB_INV_SCALE = [100000.0, 10000.0, 1000.0, 100.0]
+
+
+def _encode_float_to_int16(value: float) -> int:
+    """Encode a float to a signed int16 using multi-scale quantization (mirrors pdxearch_blob_codec.hpp)."""
+    for x in range(4):
+        q = round(value * _BLOB_INV_SCALE[x])
+        if -8192 <= q <= 8191:
+            return (q << 2) | x
+    q = max(-8192, min(8191, round(value * _BLOB_INV_SCALE[3])))
+    return (q << 2) | 3
+
+
+def _encode_query_blob_base64(query_vec: list[float]) -> str:
+    """Encode a float vector to a base64 string of quantized int16 values."""
+    import struct
+    import base64
+
+    encoded = struct.pack(f"<{len(query_vec)}h", *(_encode_float_to_int16(float(v)) for v in query_vec))
+    return base64.b64encode(encoded).decode("ascii")

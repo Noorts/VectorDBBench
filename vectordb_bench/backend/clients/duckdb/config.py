@@ -55,6 +55,7 @@ class DuckDBCaseConfig(BaseModel, DBCaseConfig):
     create_index: CreateIndex = CreateIndex.NEVER
     # The backend sets the metric_type based on the dataset's metric type.
     metric_type: MetricType | None = None
+    use_blob_interface: bool = True
 
     def _metric_type_to_function_name(self) -> str:
         # https://duckdb.org/docs/stable/sql/functions/array
