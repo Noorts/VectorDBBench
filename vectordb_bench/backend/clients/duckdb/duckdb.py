@@ -35,11 +35,6 @@ class DuckDB(VectorDB):
         self.predicate_column_type = predicate_column_type
         self.kwargs = kwargs
 
-        if self.case_config.use_blob_interface and self.case_config.index == IndexType.HNSW:
-            raise ValueError(
-                "The blob interface is currently not supported with DuckDB VSS (HNSW). Set --no-use-blob-interface."
-            )
-
         self.id_column_name = "id"
         self.embedding_column_name = "embedding"
         self.embedding_column_element_type = "FLOAT"
