@@ -47,7 +47,7 @@ class DuckDBTypedDict(CommonTypedDict):
         bool,
         click.option(
             "--use-blob-interface/--no-use-blob-interface",
-            help="Use the PDXearch blob-based query interface instead of FLOAT[] literals.",
+            help="Use the blob-based query interface instead of FLOAT[] literals.",
             default=True,
             show_default=True,
         ),
@@ -119,6 +119,16 @@ class DuckDBPDXearchTypedDict(DuckDBWithExtensionTypedDict):
 
 
 class DuckDBVSSTypedDict(DuckDBWithExtensionTypedDict):
+    extension_path: Annotated[
+        str | None,
+        click.option(
+            "--extension-path",
+            type=str,
+            help="Path to a locally built DuckDB VSS extension. If not provided, the official VSS extension is installed.",
+            required=False,
+            default=None,
+        ),
+    ]
     # https://duckdb.org/docs/stable/core_extensions/vss#index-options
     ef_construction: Annotated[
         int,
@@ -249,6 +259,7 @@ def DuckDBVSS(**parameters: Unpack[DuckDBVSSTypedDict]):
         ),
         db_case_config=DuckDBCaseVSSConfig(
             use_blob_interface=parameters["use_blob_interface"],
+            extension_path=parameters["extension_path"],
             index_name=parameters["index_name"],
             duckdb_threads_during_index_creation=parameters["duckdb_threads_during_index_creation"],
             index_ef_construction=parameters["ef_construction"],

@@ -178,6 +178,8 @@ class DuckDBCaseVSSConfig(DuckDBCaseExtensionConfig):
     index: IndexType = IndexType.HNSW
     create_index: CreateIndex = CreateIndex.AFTER_INSERT
 
+    extension_path: str | None = None
+
     # Index creation options
     # Except metric. Set automatically based on dataset.
     index_ef_construction: int | None = None

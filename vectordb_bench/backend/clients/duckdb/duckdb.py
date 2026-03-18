@@ -120,9 +120,14 @@ class DuckDB(VectorDB):
         self.conn.commit()
 
     def _load_vss_extension(self):
-        log.debug("Installing and loading VSS extension")
-        self.conn.execute("INSTALL vss")
-        self.conn.execute("LOAD vss")
+        extension_path = getattr(self.case_config, 'extension_path', None)
+        if extension_path:
+            log.debug(f"Loading VSS extension from {extension_path}")
+            self.conn.execute(f"LOAD '{extension_path}'")
+        else:
+            log.debug("Installing and loading VSS extension")
+            self.conn.execute("INSTALL vss")
+            self.conn.execute("LOAD vss")
         self.conn.commit()
 
     # ----------------------------------
@@ -281,7 +286,11 @@ class DuckDB(VectorDB):
         array_function_name = self.case_config._metric_type_to_function_name()
 
         if self.case_config.use_blob_interface:
-            query_vec_literal = f"pdxearch_base64_to_blob('{_encode_query_blob_base64(query)}')"
+            if self.case_config.index == IndexType.HNSW:
+                blob_func = "vss_base64_to_blob"
+            else:
+                blob_func = "pdxearch_base64_to_blob"
+            query_vec_literal = f"{blob_func}('{_encode_query_blob_base64(query)}')"
         else:
             query_vec_literal = f"{query}::{self.embedding_column_element_type}[{self.dims}]"
 
