@@ -372,6 +372,10 @@ class TestResult(BaseModel):
                         ]
                     else:
                         case_result["metrics"]["serial_latencies"] = []
+
+                    # Handle recalls for backward compatibility with existing result files
+                    if "recalls" not in case_result["metrics"]:
+                        case_result["metrics"]["recalls"] = []
             return TestResult.validate(test_result)
 
     def display(self, dbs: list[DB] | None = None):
