@@ -58,6 +58,9 @@
 
 ## Benchmark
 
+> [!WARNING]
+> Ask Noorts for the private S3 bucket URL only if you need access to the new datasets.
+
 1. Set up a `.env` file.
 
     ```ini
@@ -69,20 +72,20 @@
     DATASET_LOCAL_DIR="/tmp/vectordb_bench/dataset"
     ```
 
-2. For example, run a benchmark using the OpenAI dataset using plain DuckDB or using the DuckDB PDXearch extension.
+2. For example, run a benchmark using the Cohere dataset using plain DuckDB or using the DuckDB PDXearch extension. Note that the VectorDBBench DuckDB clients currently do not support concurrent search. This is why we include `--skip-search-concurrent`.
 
     ```sh
-    vectordbbench duckdb --skip-search-concurrent --case-type Performance1536D999K --duckdb-threads 10 --k 10
+    vectordbbench duckdb --skip-search-concurrent --case-type Performance768D1M --duckdb-threads 10 --k 10
     ```
 
     ```sh
-    vectordbbench duckdbpdxearch --skip-search-concurrent --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance1536D999K --duckdb-threads 10 --n-probe 28 --k 10
+    vectordbbench duckdbpdxearch --skip-search-concurrent --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance768D1M --duckdb-threads 10 --n-probe 28 --k 10
     ```
 
-3. After running the benchmark commands the SQL table and index will have been created. In the follow up invocations you can skip creating the table, loading the data, and creating the index (for VSS) using `--skip-drop-old` and `--skip-load`.
+3. After running the benchmark commands the SQL table and index will have been created. In the follow up invocations you can skip creating the table, loading the data, and creating the index (for VSS) using `--skip-drop-old` and `--skip-load`. This can be useful when you perform a parameter sweep (e.g., when you only change `--n-probe` across invocations). Of course, if you switch to a new case-type (i.e., dataset) you'll have to let VectorDBBench recreate the table with the new dataset.
 
     ```sh
-    vectordbbench duckdb --skip-search-concurrent --case-type Performance1536D999K --duckdb-threads 10 --k 10 --skip-drop-old --skip-load
+    vectordbbench duckdb --skip-search-concurrent --case-type Performance768D1M --duckdb-threads 10 --k 10 --skip-drop-old --skip-load
     ```
 
 4. Also consider running a filtered search (two methods shown below).
