@@ -193,10 +193,10 @@ def get_custom_case_config(parameters: dict) -> dict:
             "dataset_with_size_type": parameters["dataset_with_size_type"],
             "label_percentage": parameters["label_percentage"],
         }
-    elif parameters["case_type"] == "ArxivFilterPerformanceCase":
+    elif parameters["case_type"] in ("ArxivFilterPerformanceCase", "CohereFilterPerformanceCase"):
         custom_case_config = {
-            "arxiv_filter_type": parameters["arxiv_filter_type"],
-            "arxiv_dataset_order": parameters["arxiv_dataset_order"],
+            "filter_type": parameters["filter_type"],
+            "dataset_order": parameters["dataset_order"],
         }
     return custom_case_config
 
@@ -480,24 +480,24 @@ class CommonTypedDict(TypedDict):
             show_default=True,
         ),
     ]
-    # TODO: See if we can make this option dependent on whether the case is ArxivFilterPerformanceCase.
-    arxiv_filter_type: Annotated[
+    # TODO: See if we can make these options dependent on whether the case is ...FilterPerformanceCase.
+    filter_type: Annotated[
         str,
         click.option(
-            "--arxiv-filter-type",
+            "--filter-type",
             type=click.Choice(["EM", "R", "EMIS"], case_sensitive=True),
-            help="Arxiv filter type for ArxivFilterPerformanceCase: EM (ExactMatch), R (Range), EMIS (ExactMatchInSet)",
-            default="EM",
+            help="Filter type for filtered performance cases: EM (ExactMatch), R (Range), EMIS (ExactMatchInSet)",
+            default="R",
             show_default=True,
         ),
     ]
-    arxiv_dataset_order: Annotated[
+    dataset_order: Annotated[
         str,
         click.option(
-            "--arxiv-dataset-order",
-            type=click.Choice(["original", "sorted_by_update_date", "randomly_shuffled"], case_sensitive=True),
-            help="Row ordering variant of the Arxiv dataset for ArxivFilterPerformanceCase",
-            default="original",
+            "--dataset-order",
+            type=click.Choice(["original", "sorted_by_predicate", "randomly_shuffled"], case_sensitive=True),
+            help="Row ordering variant of the dataset for filtered performance cases",
+            default="randomly_shuffled",
             show_default=True,
         ),
     ]

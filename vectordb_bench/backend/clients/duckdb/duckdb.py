@@ -120,7 +120,7 @@ class DuckDB(VectorDB):
         self.conn.commit()
 
     def _load_vss_extension(self):
-        extension_path = getattr(self.case_config, 'extension_path', None)
+        extension_path = getattr(self.case_config, "extension_path", None)
         if extension_path:
             log.debug(f"Loading VSS extension from {extension_path}")
             self.conn.execute(f"LOAD '{extension_path}'")

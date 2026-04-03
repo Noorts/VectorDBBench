@@ -68,13 +68,15 @@ class CaseType(Enum):
 
     NewIntFilterPerformanceCase = 400
 
-    ArxivFilterPerformanceCase = 600
-
     # Custom Noorts datasets.
+    ArxivFilterPerformanceCase = 600
+    CohereFilterPerformanceCase = 601
+
     Performance1536D999K = 500
     Performance1024D769K = 501
     Performance1024D1200K = 502
     Performance128D4999K = 503
+    Performance768D6M = 504
 
     def case_cls(self, custom_configs: dict | None = None) -> type["Case"]:
         if custom_configs is None:
@@ -266,6 +268,16 @@ class Performance768D100M(PerformanceCase):
     recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_768D_100M
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_100M
+
+
+class Performance768D6M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance768D6M
+    filter_rate: float | int | None = None
+    dataset: DatasetManager = Dataset.C_COHERE_6M.manager(6_021_120)
+    name: str = "Search Performance Test (6M Dataset, 768 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium dataset
+    (<b>Cohere 6M vectors</b>, 768 dimensions) at varying parallel levels.
+    Results will show index building time, recall, and maximum QPS."""
 
 
 class Performance1536D500K(PerformanceCase):
@@ -688,49 +700,48 @@ ARXIV_FILTER_MAP = {
 
 ARXIV_DATASET_ORDER_MAP = {
     "original": Dataset.C_ARXIV_FOR_FANNs,
-    "sorted_by_update_date": Dataset.C_ARXIV_FOR_FANNs_SORTED_BY_UPDATE_DATE,
+    "sorted_by_predicate": Dataset.C_ARXIV_FOR_FANNs_SORTED_BY_UPDATE_DATE,
     "randomly_shuffled": Dataset.C_ARXIV_FOR_FANNs_RANDOM,
 }
 
 ARXIV_DATASET_ORDER_SUFFIX = {
     "original": "",
-    "sorted_by_update_date": " (sorted by update_date)",
+    "sorted_by_predicate": " (sorted by update_date)",
     "randomly_shuffled": " (randomly shuffled)",
 }
 
 
 class ArxivFilterCase(PerformanceCase):
     case_id: CaseType = CaseType.ArxivFilterPerformanceCase
-    arxiv_filter_type: str  # "EM", "R", or "EMIS"
-    arxiv_dataset_order: str = "original"  # "original", "sorted_by_update_date", or "randomly_shuffled"
+    filter_type: str  # "EM", "R", or "EMIS"
+    dataset_order: str = "original"  # "original", "sorted_by_predicate", or "randomly_shuffled"
 
     def __init__(
         self,
-        arxiv_filter_type: str = "EM",
-        arxiv_dataset_order: str = "original",
+        filter_type: str = "EM",
+        dataset_order: str = "original",
         **kwargs,
     ):
-        if arxiv_dataset_order not in ARXIV_DATASET_ORDER_MAP:
+        if dataset_order not in ARXIV_DATASET_ORDER_MAP:
             raise ValueError(
-                f"Invalid arxiv_dataset_order: {arxiv_dataset_order!r}. "
-                f"Expected one of: {list(ARXIV_DATASET_ORDER_MAP.keys())}"
+                f"Invalid dataset_order: {dataset_order!r}. " f"Expected one of: {list(ARXIV_DATASET_ORDER_MAP.keys())}"
             )
-        dataset = ARXIV_DATASET_ORDER_MAP[arxiv_dataset_order].manager(1_200_000)
-        suffix = ARXIV_DATASET_ORDER_SUFFIX[arxiv_dataset_order]
-        name = f"ArxivFilter-{arxiv_filter_type} - {dataset.data.full_name}{suffix}"
-        description = f"ArxivForFanns filtered search ({arxiv_filter_type}){suffix}"
+        dataset = ARXIV_DATASET_ORDER_MAP[dataset_order].manager(1_200_000)
+        suffix = ARXIV_DATASET_ORDER_SUFFIX[dataset_order]
+        name = f"ArxivFilter-{filter_type} - {dataset.data.full_name}{suffix}"
+        description = f"ArxivForFanns filtered search ({filter_type}){suffix}"
         super().__init__(
             name=name,
             description=description,
             dataset=dataset,
-            arxiv_filter_type=arxiv_filter_type,
-            arxiv_dataset_order=arxiv_dataset_order,
+            filter_type=filter_type,
+            dataset_order=dataset_order,
             **kwargs,
         )
 
     @property
     def filters(self) -> Filter:
-        filter_cls = ARXIV_FILTER_MAP[self.arxiv_filter_type]
+        filter_cls = ARXIV_FILTER_MAP[self.filter_type]
         return filter_cls()
 
 
@@ -742,6 +753,56 @@ class Performance1024D1200K(PerformanceCase):
     description: str = """This case tests the search performance of a vector database with a medium dataset
     (<b>ArxivForFanns 1200000 vectors</b>, 1024 dimensions) at varying parallel levels.
     Results will show index building time, recall, and maximum QPS."""
+
+
+COHERE_FILTER_MAP = {
+    "R": lambda: RangeFilter(field="original_id"),
+}
+
+COHERE_DATASET_ORDER_MAP = {
+    "randomly_shuffled": Dataset.C_COHERE_6M,
+    "sorted_by_predicate": Dataset.C_COHERE_6M_SORTED,
+}
+
+COHERE_DATASET_ORDER_SUFFIX = {
+    "randomly_shuffled": " (randomly shuffled)",
+    "sorted_by_predicate": " (sorted by original_id)",
+}
+
+
+class CohereFilterCase(PerformanceCase):
+    case_id: CaseType = CaseType.CohereFilterPerformanceCase
+    filter_type: str  # "R"
+    dataset_order: str = "randomly_shuffled"
+
+    def __init__(
+        self,
+        filter_type: str = "R",
+        dataset_order: str = "randomly_shuffled",
+        **kwargs,
+    ):
+        if dataset_order not in COHERE_DATASET_ORDER_MAP:
+            raise ValueError(
+                f"Invalid dataset_order: {dataset_order!r}. "
+                f"Expected one of: {list(COHERE_DATASET_ORDER_MAP.keys())}"
+            )
+        dataset = COHERE_DATASET_ORDER_MAP[dataset_order].manager(6_021_120)
+        suffix = COHERE_DATASET_ORDER_SUFFIX[dataset_order]
+        name = f"CohereFilter-{filter_type} - {dataset.data.full_name}{suffix}"
+        description = f"Cohere 6M filtered search ({filter_type}){suffix}"
+        super().__init__(
+            name=name,
+            description=description,
+            dataset=dataset,
+            filter_type=filter_type,
+            dataset_order=dataset_order,
+            **kwargs,
+        )
+
+    @property
+    def filters(self) -> Filter:
+        filter_factory = COHERE_FILTER_MAP[self.filter_type]
+        return filter_factory()
 
 
 class Performance128D4999K(PerformanceCase):
@@ -784,4 +845,6 @@ type2case = {
     CaseType.Performance1024D769K: Performance1024D769K,
     CaseType.Performance1024D1200K: Performance1024D1200K,
     CaseType.Performance128D4999K: Performance128D4999K,
+    CaseType.Performance768D6M: Performance768D6M,
+    CaseType.CohereFilterPerformanceCase: CohereFilterCase,
 }

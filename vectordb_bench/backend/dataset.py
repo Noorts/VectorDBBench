@@ -362,7 +362,40 @@ class C_SIFT(BaseDataset):
     }
 
 
-ALTERNATIVE_S3_DATASETS_NAMES = ["C_OpenAI", "C_Agnews", "C_ArxivForFanns", "C_ArxivForFannsSortedByUpdateDate", "C_ArxivForFannsRandom", "C_SIFT"]
+class C_Cohere6M(BaseDataset):
+    name: str = "C_Cohere6M"
+    dim: int = 768
+    metric_type: MetricType = MetricType.COSINE
+    use_shuffled: bool = True
+    with_gt: bool = True
+    with_scalar_labels: bool = True
+    _size_label: dict = {
+        6_021_120: SizeLabel(6_021_120, "MEDIUM", 7),
+    }
+
+
+class C_Cohere6MSorted(BaseDataset):
+    name: str = "C_Cohere6MSorted"
+    dim: int = 768
+    metric_type: MetricType = MetricType.COSINE
+    use_shuffled: bool = False
+    with_gt: bool = True
+    with_scalar_labels: bool = True
+    _size_label: dict = {
+        6_021_120: SizeLabel(6_021_120, "MEDIUM", 7),
+    }
+
+
+ALTERNATIVE_S3_DATASETS_NAMES = [
+    "C_OpenAI",
+    "C_Agnews",
+    "C_ArxivForFanns",
+    "C_ArxivForFannsSortedByUpdateDate",
+    "C_ArxivForFannsRandom",
+    "C_SIFT",
+    "C_Cohere6M",
+    "C_Cohere6MSorted",
+]
 
 
 class DatasetManager(BaseModel):
@@ -563,6 +596,8 @@ class Dataset(Enum):
     C_ARXIV_FOR_FANNs_SORTED_BY_UPDATE_DATE = C_ArxivForFannsSortedByUpdateDate
     C_ARXIV_FOR_FANNs_RANDOM = C_ArxivForFannsRandom
     C_SIFT = C_SIFT
+    C_COHERE_6M = C_Cohere6M
+    C_COHERE_6M_SORTED = C_Cohere6MSorted
 
     def get(self, size: int) -> BaseDataset:
         return self.value(size=size)
