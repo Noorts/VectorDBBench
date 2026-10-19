@@ -48,10 +48,7 @@ class DuckDB(VectorDB):
                 self._drop_index()
             self._drop_table()
             self._create_table(self.dims)
-            if (
-                self.case_config.create_index == CreateIndex.BEFORE_INSERT
-                and self.case_config.index != IndexType.DUCKIR_VSS
-            ):
+            if self.case_config.create_index == CreateIndex.BEFORE_INSERT:
                 with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
                     self._drop_index()
                     self._create_index()
@@ -74,11 +71,6 @@ class DuckDB(VectorDB):
         # Load extension
         if self.case_config.index == IndexType.DUCKIR_VSS:
             self._load_duckir_extension(self.case_config.extension_path)
-
-            # Temporary, while index persistence does not work for DuckIR.
-            with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
-                self._drop_index()
-                self._create_index()
 
         if self.case_config.index == IndexType.HNSW:
             self._load_vss_extension()
@@ -181,14 +173,6 @@ class DuckDB(VectorDB):
     def _create_index(self):
         assert self.conn is not None
 
-        # Temporary workaround for DuckIR to make _create_index a noop if the table has not been populated yet.
-        # This can be removed and the other code refactored once DuckIR has implemented index persistence.
-        if self.case_config.index == IndexType.DUCKIR_VSS:
-            res = self.conn.execute(f"SELECT COUNT(*) FROM {self.conn_config['table_name']}")
-            if res.fetchone()[0] == 0:
-                log.debug("Table has not been populated yet, skipping index creation")
-                return
-
         # https://duckdb.org/docs/stable/core_extensions/vss#persistence
         if self.case_config.index == IndexType.HNSW:
             self.conn.execute(f"SET hnsw_enable_experimental_persistence = true;")
@@ -211,12 +195,8 @@ class DuckDB(VectorDB):
         self.conn.commit()
 
     def optimize(self, data_size: int | None = None):
-        if self.case_config.create_index == CreateIndex.AFTER_INSERT and self.case_config.index != IndexType.DUCKIR_VSS:
+        if self.case_config.create_index == CreateIndex.AFTER_INSERT:
             with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
-                # For DuckIR this is useless, as the index is not persisted, so we have to drop and recreate it before
-                # the search occurs when it calls init() again (as in between it will drop the connection). Before
-                # running this optimize it will already call init() so we skip this for DuckIR and it will be timed
-                # correctly anyway.
                 self._drop_index()
                 self._create_index()
 

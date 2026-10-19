@@ -82,7 +82,7 @@
     vectordbbench duckdb-duckir --skip-search-concurrent --extension-path <full_path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension --case-type Performance768D1M --duckdb-threads 10 --n-probe 28 --k 10
     ```
 
-3. After running the benchmark commands the SQL table and index will have been created. In the follow up invocations you can skip creating the table, loading the data, and creating the index (for VSS) using `--skip-drop-old` and `--skip-load`. This can be useful when you perform a parameter sweep (e.g., when you only change `--n-probe` across invocations). Of course, if you switch to a new case-type (i.e., dataset) you'll have to let VectorDBBench recreate the table with the new dataset.
+3. After running the benchmark commands the SQL table and index will have been created. In the follow up invocations you can skip creating the table, loading the data, and creating the index using `--skip-drop-old` and `--skip-load`. This can be useful when you perform a parameter sweep (e.g., when you only change `--n-probe` across invocations). Of course, if you switch to a new case-type (i.e., dataset) you'll have to let VectorDBBench recreate the table with the new dataset.
 
     ```sh
     vectordbbench duckdb --skip-search-concurrent --case-type Performance768D1M --duckdb-threads 10 --k 10 --skip-drop-old --skip-load
