@@ -64,10 +64,11 @@ class DuckDB(VectorDB):
         self.conn = self._create_connection(read_only=False)
         self.conn.execute("PRAGMA disable_progress_bar;")
 
-        if self.case_config.index == IndexType.DUCKIR_VSS or self.case_config.index == IndexType.HNSW:
+        if self.case_config.index == IndexType.HNSW:
             # Disable DuckDB's late materialization query optimization as the
-            # DuckIR and VSS extensions do not handle it yet, leading to
-            # suboptimal query plans when K <= 50.
+            # VSS extension does not handle it yet, leading to suboptimal query
+            # plans when K <= 50. DuckIR addressed it in
+            # https://github.com/Noorts/DuckIR/pull/29.
             self.conn.execute("SET late_materialization_max_rows = 0;")
 
         # Load extension
