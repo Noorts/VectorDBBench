@@ -42,6 +42,7 @@ class DuckDB(VectorDB):
         self.where_clause = ""
 
         self.conn = self._create_connection(read_only=False)
+        self._load_extension()
 
         if self.drop_old:
             if self.case_config.create_index != CreateIndex.NEVER:
@@ -68,12 +69,7 @@ class DuckDB(VectorDB):
             # https://github.com/Noorts/DuckIR/pull/29.
             self.conn.execute("SET late_materialization_max_rows = 0;")
 
-        # Load extension
-        if self.case_config.index == IndexType.DUCKIR_VSS:
-            self._load_duckir_extension(self.case_config.extension_path)
-
-        if self.case_config.index == IndexType.HNSW:
-            self._load_vss_extension()
+        self._load_extension()
 
         # Set session parameters
         session_statements = [
@@ -105,6 +101,13 @@ class DuckDB(VectorDB):
             database=self.conn_config["database_name"],
             read_only=read_only,
         )
+
+    def _load_extension(self):
+        if self.case_config.index == IndexType.DUCKIR_VSS:
+            self._load_duckir_extension(self.case_config.extension_path)
+
+        if self.case_config.index == IndexType.HNSW:
+            self._load_vss_extension()
 
     def _load_duckir_extension(self, extension_path: str):
         load_extension_sql = f"LOAD '{extension_path}'"
