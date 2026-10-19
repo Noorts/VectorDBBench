@@ -1,6 +1,6 @@
 # VectorDBBench DuckDB Clients
 
-- **New DuckDB clients**: DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and  clients to benchmark DuckDB's DuckIR extension (`duckdb-duckir`) and VSS extension (`duckdbvss`).
+- **New DuckDB clients**: DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and  clients to benchmark DuckDB's DuckIR extension (`duckdb-duckir`) and VSS extension (`duckdb-vss`).
 
 - **New datasets**: We add new datasets. These are automatically downloaded from a private S3 bucket.
 
@@ -53,7 +53,7 @@
     ```
 
     ```sh
-    vectordbbench duckdbvss --help
+    vectordbbench duckdb-vss --help
     ```
 
 ## Benchmark

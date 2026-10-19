@@ -240,7 +240,7 @@ def DuckDBDuckIR(**parameters: Unpack[DuckDBDuckIRTypedDict]):
     )
 
 
-@cli.command()
+@cli.command("duckdb-vss")
 @click_parameter_decorators_from_typed_dict(DuckDBVSSTypedDict)
 def DuckDBVSS(**parameters: Unpack[DuckDBVSSTypedDict]):
     from .config import DuckDBConnectionConfig, DuckDBCaseVSSConfig
