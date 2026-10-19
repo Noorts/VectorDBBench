@@ -1,6 +1,6 @@
 # VectorDBBench DuckDB Clients
 
-- **New DuckDB clients**: DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and  clients to benchmark DuckDB's PDXearch extension (`duckdbpdxearch`) and VSS extension (`duckdbvss`).
+- **New DuckDB clients**: DuckDB is an in-process database optimized for analytical workloads. This fork adds VectorDBBench clients for DuckDB. Specifically, a base client (`duckdb`) to benchmark DuckDB's built-in VSS capabilities, and  clients to benchmark DuckDB's DuckIR extension (`duckdb-duckir`) and VSS extension (`duckdbvss`).
 
 - **New datasets**: We add new datasets. These are automatically downloaded from a private S3 bucket.
 
@@ -49,7 +49,7 @@
     ```
 
     ```sh
-    vectordbbench duckdbpdxearch --help
+    vectordbbench duckdb-duckir --help
     ```
 
     ```sh
@@ -72,14 +72,14 @@
     DATASET_LOCAL_DIR="/tmp/vectordb_bench/dataset"
     ```
 
-2. For example, run a benchmark using the Cohere dataset using plain DuckDB or using the DuckDB PDXearch extension. Note that the VectorDBBench DuckDB clients currently do not support concurrent search. This is why we include `--skip-search-concurrent`.
+2. For example, run a benchmark using the Cohere dataset using plain DuckDB or using the DuckDB DuckIR extension. Note that the VectorDBBench DuckDB clients currently do not support concurrent search. This is why we include `--skip-search-concurrent`.
 
     ```sh
     vectordbbench duckdb --skip-search-concurrent --case-type Performance768D1M --duckdb-threads 10 --k 10
     ```
 
     ```sh
-    vectordbbench duckdbpdxearch --skip-search-concurrent --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance768D1M --duckdb-threads 10 --n-probe 28 --k 10
+    vectordbbench duckdb-duckir --skip-search-concurrent --extension-path <full_path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension --case-type Performance768D1M --duckdb-threads 10 --n-probe 28 --k 10
     ```
 
 3. After running the benchmark commands the SQL table and index will have been created. In the follow up invocations you can skip creating the table, loading the data, and creating the index (for VSS) using `--skip-drop-old` and `--skip-load`. This can be useful when you perform a parameter sweep (e.g., when you only change `--n-probe` across invocations). Of course, if you switch to a new case-type (i.e., dataset) you'll have to let VectorDBBench recreate the table with the new dataset.
@@ -91,13 +91,13 @@
 4. Also consider running a filtered search (two methods shown below).
 
     ```sh
-    vectordbbench duckdbpdxearch --skip-search-concurrent \
-      --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --case-type Performance1536D500K1P --duckdb-threads 10 --n-probe 28 --k 10
+    vectordbbench duckdb-duckir --skip-search-concurrent \
+      --extension-path <full_path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension --case-type Performance1536D500K1P --duckdb-threads 10 --n-probe 28 --k 10
     ```
 
     ```sh
-    vectordbbench duckdbpdxearch --skip-search-concurrent \
-      --extension-path <full_path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension \
+    vectordbbench duckdb-duckir --skip-search-concurrent \
+      --extension-path <full_path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension \
       --case-type NewIntFilterPerformanceCase \
       --dataset-with-size-type "Medium OpenAI (1536dim, 500K)" \
       --filter-rate 0.5 \
@@ -119,8 +119,8 @@ We introduce a custom arxiv-for-fanns filtered search workload. This is based on
 The new `ArxivFilterPerformanceCase` comes with three filter types: exact match (EM), range (R), and exact match in set (EMIS). Use the `--arxiv-filter-type` option to specify the filter workload to run, as shown below.
 
 ```sh
-vectordbbench duckdbpdxearch --skip-search-concurrent \
-  --extension-path <full path>/PDXearch/build/release/extension/pdxearch/pdxearch.duckdb_extension --k 10 --case-type ArxivFilterPerformanceCase --arxiv-filter-type EM
+vectordbbench duckdb-duckir --skip-search-concurrent \
+  --extension-path <full path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension --k 10 --case-type ArxivFilterPerformanceCase --arxiv-filter-type EM
 ```
 
 # VectorDBBench(VDBBench): A Benchmark Tool for VectorDB

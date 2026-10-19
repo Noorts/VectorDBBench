@@ -35,7 +35,7 @@ class DuckDBConnectionConfig(DBConfig):
 
 
 class DuckDBIndexParam(TypedDict):
-    index_type: str  # Flat, PDXearch, HNSW
+    index_type: str  # Flat, DuckIR, HNSW
     extension_path: str
     index_name: str
     index_options: Sequence[dict[str, Any]]
@@ -107,8 +107,8 @@ class DuckDBCaseExtensionConfig(DuckDBCaseConfig):
         raise ValueError(f"Unsupported metric type: {self.metric_type}")
 
 
-class DuckDBCasePDXearchConfig(DuckDBCaseExtensionConfig):
-    index: IndexType = IndexType.PDXEARCH
+class DuckDBCaseDuckIRConfig(DuckDBCaseExtensionConfig):
+    index: IndexType = IndexType.DUCKIR_VSS
     create_index: CreateIndex = CreateIndex.AFTER_INSERT
 
     extension_path: str
@@ -166,7 +166,7 @@ class DuckDBCasePDXearchConfig(DuckDBCaseExtensionConfig):
         if self.runtime_n_probe is not None:
             session_options.append(
                 {
-                    "pdxearch_n_probe": self.runtime_n_probe,
+                    "duckir_vss_n_probe": self.runtime_n_probe,
                 }
             )
         return {
@@ -242,6 +242,6 @@ class DuckDBCaseVSSConfig(DuckDBCaseExtensionConfig):
 
 _duckdb_case_config = {
     IndexType.Flat: DuckDBCasePlainConfig,
-    IndexType.PDXEARCH: DuckDBCasePDXearchConfig,
+    IndexType.DUCKIR_VSS: DuckDBCaseDuckIRConfig,
     IndexType.HNSW: DuckDBCaseVSSConfig,
 }

@@ -77,17 +77,17 @@ class DuckDBWithExtensionTypedDict(DuckDBTypedDict):
     ]
 
 
-class DuckDBPDXearchTypedDict(DuckDBWithExtensionTypedDict):
+class DuckDBDuckIRTypedDict(DuckDBWithExtensionTypedDict):
     extension_path: Annotated[
         str,
-        click.option("--extension-path", type=str, help="Path to the DuckDB PDXearchextension.", required=True),
+        click.option("--extension-path", type=str, help="Path to the DuckDB DuckIR extension.", required=True),
     ]
     quantization_type: Annotated[
         str,
         click.option(
             "--quantization-type",
             type=click.Choice(["f32", "u8"]),
-            help="[Index creation parameter] Quantization to use for the embeddings in the PDXearch index. f32 means no quantization.",
+            help="[Index creation parameter] Quantization to use for the embeddings in the DuckIR index. f32 means no quantization.",
             default="u8",
             show_default=True,
             required=False,
@@ -99,7 +99,7 @@ class DuckDBPDXearchTypedDict(DuckDBWithExtensionTypedDict):
         click.option(
             "--n-probe",
             type=int,
-            help="[Index creation parameter] Number of partitions to probe in (the first iteration of) the PDXearch index search. Stored as the default n_probe value in the index. Can be overwritten by the runtime_n_probe parameter.",
+            help="[Index creation parameter] Number of partitions to probe in (the first iteration of) the DuckIR index search. Stored as the default n_probe value in the index. Can be overwritten by the runtime_n_probe parameter.",
             required=False,
         ),
     ]
@@ -112,7 +112,7 @@ class DuckDBPDXearchTypedDict(DuckDBWithExtensionTypedDict):
         click.option(
             "--runtime-n-probe",
             type=int,
-            help="[Runtime parameter] Number of partitions to probe in (the first iteration of) the PDXearch index search. Overwrites the index_n_probe parameter.",
+            help="[Runtime parameter] Number of partitions to probe in (the first iteration of) the DuckIR index search. Overwrites the index_n_probe parameter.",
             required=False,
         ),
     ]
@@ -209,14 +209,14 @@ def DuckDB(**parameters: Unpack[DuckDBTypedDict]):
     )
 
 
-@cli.command()
-@click_parameter_decorators_from_typed_dict(DuckDBPDXearchTypedDict)
-def DuckDBPDXearch(**parameters: Unpack[DuckDBPDXearchTypedDict]):
-    from .config import DuckDBConnectionConfig, DuckDBCasePDXearchConfig
+@cli.command("duckdb-duckir")
+@click_parameter_decorators_from_typed_dict(DuckDBDuckIRTypedDict)
+def DuckDBDuckIR(**parameters: Unpack[DuckDBDuckIRTypedDict]):
+    from .config import DuckDBConnectionConfig, DuckDBCaseDuckIRConfig
 
     assert (
         parameters["num_concurrency"] == [1] or parameters["search_concurrent"] == False
-    ), "The DuckDB PDXearch client does not yet support concurrent search."
+    ), "The DuckDB DuckIR client does not yet support concurrent search."
 
     run(
         db=DB.DuckDB,
@@ -226,7 +226,7 @@ def DuckDBPDXearch(**parameters: Unpack[DuckDBPDXearchTypedDict]):
             duckdb_threads=parameters["duckdb_threads"],
             db_label=parameters["db_label"],
         ),
-        db_case_config=DuckDBCasePDXearchConfig(
+        db_case_config=DuckDBCaseDuckIRConfig(
             use_blob_interface=parameters["use_blob_interface"],
             extension_path=parameters["extension_path"],
             index_name=parameters["index_name"],

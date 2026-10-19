@@ -50,7 +50,7 @@ class DuckDB(VectorDB):
             self._create_table(self.dims)
             if (
                 self.case_config.create_index == CreateIndex.BEFORE_INSERT
-                and self.case_config.index != IndexType.PDXEARCH
+                and self.case_config.index != IndexType.DUCKIR_VSS
             ):
                 with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
                     self._drop_index()
@@ -64,17 +64,17 @@ class DuckDB(VectorDB):
         self.conn = self._create_connection(read_only=False)
         self.conn.execute("PRAGMA disable_progress_bar;")
 
-        if self.case_config.index == IndexType.PDXEARCH or self.case_config.index == IndexType.HNSW:
+        if self.case_config.index == IndexType.DUCKIR_VSS or self.case_config.index == IndexType.HNSW:
             # Disable DuckDB's late materialization query optimization as the
-            # PDXearch and VSS extensions do not handle it yet, leading to
+            # DuckIR and VSS extensions do not handle it yet, leading to
             # suboptimal query plans when K <= 50.
             self.conn.execute("SET late_materialization_max_rows = 0;")
 
         # Load extension
-        if self.case_config.index == IndexType.PDXEARCH:
-            self._load_pdxearch_extension(self.case_config.extension_path)
+        if self.case_config.index == IndexType.DUCKIR_VSS:
+            self._load_duckir_extension(self.case_config.extension_path)
 
-            # Temporary, while index persistence does not work for PDXearch.
+            # Temporary, while index persistence does not work for DuckIR.
             with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
                 self._drop_index()
                 self._create_index()
@@ -113,9 +113,9 @@ class DuckDB(VectorDB):
             read_only=read_only,
         )
 
-    def _load_pdxearch_extension(self, extension_path: str):
+    def _load_duckir_extension(self, extension_path: str):
         load_extension_sql = f"LOAD '{extension_path}'"
-        log.debug(f"Loading PDXearch extension from {extension_path}")
+        log.debug(f"Loading DuckIR extension from {extension_path}")
         self.conn.execute(load_extension_sql)
         self.conn.commit()
 
@@ -180,9 +180,9 @@ class DuckDB(VectorDB):
     def _create_index(self):
         assert self.conn is not None
 
-        # Temporary workaround for PDXearch to make _create_index a noop if the table has not been populated yet.
-        # This can be removed and the other code refactored once PDXearch has implemented index persistence.
-        if self.case_config.index == IndexType.PDXEARCH:
+        # Temporary workaround for DuckIR to make _create_index a noop if the table has not been populated yet.
+        # This can be removed and the other code refactored once DuckIR has implemented index persistence.
+        if self.case_config.index == IndexType.DUCKIR_VSS:
             res = self.conn.execute(f"SELECT COUNT(*) FROM {self.conn_config['table_name']}")
             if res.fetchone()[0] == 0:
                 log.debug("Table has not been populated yet, skipping index creation")
@@ -210,11 +210,11 @@ class DuckDB(VectorDB):
         self.conn.commit()
 
     def optimize(self, data_size: int | None = None):
-        if self.case_config.create_index == CreateIndex.AFTER_INSERT and self.case_config.index != IndexType.PDXEARCH:
+        if self.case_config.create_index == CreateIndex.AFTER_INSERT and self.case_config.index != IndexType.DUCKIR_VSS:
             with SetDuckDBThreadsTo(self.conn, self.case_config.duckdb_threads_during_index_creation):
-                # For PDXearch this is useless, as the index is not persisted, so we have to drop and recreate it before
+                # For DuckIR this is useless, as the index is not persisted, so we have to drop and recreate it before
                 # the search occurs when it calls init() again (as in between it will drop the connection). Before
-                # running this optimize it will already call init() so we skip this for PDXearch and it will be timed
+                # running this optimize it will already call init() so we skip this for DuckIR and it will be timed
                 # correctly anyway.
                 self._drop_index()
                 self._create_index()
@@ -289,7 +289,7 @@ class DuckDB(VectorDB):
             if self.case_config.index == IndexType.HNSW:
                 blob_func = "vss_base64_to_blob"
             else:
-                blob_func = "pdxearch_base64_to_blob"
+                blob_func = "duckir_vss_base64_to_blob"
             query_vec_literal = f"{blob_func}('{_encode_query_blob_base64(query)}')"
         else:
             query_vec_literal = f"{query}::{self.embedding_column_element_type}[{self.dims}]"
@@ -308,7 +308,7 @@ _BLOB_INV_SCALE = [100000.0, 10000.0, 1000.0, 100.0]
 
 
 def _encode_float_to_int16(value: float) -> int:
-    """Encode a float to a signed int16 using multi-scale quantization (mirrors pdxearch_blob_codec.hpp)."""
+    """Encode a float to a signed int16 using multi-scale quantization (mirrors vss_blob_codec.hpp)."""
     for x in range(4):
         q = round(value * _BLOB_INV_SCALE[x])
         if -8192 <= q <= 8191:
