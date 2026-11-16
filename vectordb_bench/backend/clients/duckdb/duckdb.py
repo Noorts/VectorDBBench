@@ -3,6 +3,7 @@ from typing import Generator, Any
 
 import logging
 
+import numpy as np
 import pandas as pd
 
 from ..api import VectorDB, FilterOp, Filter, IndexType
@@ -274,12 +275,17 @@ class DuckDB(VectorDB):
     def search_embedding(self, query: list[float], K: int = 100, **kwargs):
         array_function_name = self.case_config._metric_type_to_function_name()
 
+        execute_params = None
         if self.case_config.use_blob_interface:
             if self.case_config.index == IndexType.HNSW:
-                blob_func = "vss_base64_to_blob"
+                # The HNSW (vss) fork expects its own quantized int16 encoding.
+                # This requires https://github.com/Noorts/duckdb-vss/commit/9464e55b02be616ca9bfc7024c917bd3de661fe0.
+                query_vec_literal = f"vss_base64_to_blob('{_encode_query_blob_base64(query)}')"
             else:
-                blob_func = "duckir_vss_base64_to_blob"
-            query_vec_literal = f"{blob_func}('{_encode_query_blob_base64(query)}')"
+                # DuckIR takes the query's raw little-endian float32 bytes as a BLOB parameter.
+                # See: https://github.com/cwida/DuckIR/blob/main/docs/OPTIMIZATION_GUIDE.md.
+                query_vec_literal = "?"
+                execute_params = [np.asarray(query, dtype="<f4").tobytes()]
         else:
             query_vec_literal = f"{query}::{self.embedding_column_element_type}[{self.dims}]"
 
@@ -287,7 +293,8 @@ class DuckDB(VectorDB):
         result = self.conn.execute(
             f"""SELECT {self.id_column_name} FROM {self.conn_config['table_name']} {self.where_clause}
                 ORDER BY {array_function_name}({self.embedding_column_name}, {query_vec_literal})
-                LIMIT {K};"""
+                LIMIT {K};""",
+            execute_params,
         )
 
         return [int(i[0]) for i in result.fetchall()]
