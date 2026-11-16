@@ -36,7 +36,7 @@ class DuckDBConnectionConfig(DBConfig):
 
 class DuckDBIndexParam(TypedDict):
     index_type: str  # Flat, DuckIR, HNSW
-    extension_path: str
+    extension_path: str | None
     index_name: str
     index_options: Sequence[dict[str, Any]]
     duckdb_threads_during_index_creation: int | None
@@ -111,7 +111,7 @@ class DuckDBCaseDuckIRConfig(DuckDBCaseExtensionConfig):
     index: IndexType = IndexType.DUCKIR_VSS
     create_index: CreateIndex = CreateIndex.AFTER_INSERT
 
-    extension_path: str
+    extension_path: str | None = None
 
     # Index creation options
     # Except metric. Set automatically based on dataset.

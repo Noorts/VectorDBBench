@@ -79,8 +79,10 @@
     ```
 
     ```sh
-    vectordbbench duckdb-duckir --skip-search-concurrent --extension-path <full_path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension --case-type Performance768D1M --duckdb-threads 10 --n-probe 28 --k 10
+    vectordbbench duckdb-duckir --skip-search-concurrent --case-type Performance768D1M --duckdb-threads 10 --n-probe 28 --k 10
     ```
+
+    By default, the `duckdb-duckir` client installs the DuckIR community extension (`INSTALL duckir FROM community`). To benchmark a locally built DuckIR extension instead, pass its path using `--extension-path <full_path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension`.
 
 3. After running the benchmark commands the SQL table and index will have been created. In the follow up invocations you can skip creating the table, loading the data, and creating the index using `--skip-drop-old` and `--skip-load`. This can be useful when you perform a parameter sweep (e.g., when you only change `--n-probe` across invocations). Of course, if you switch to a new case-type (i.e., dataset) you'll have to let VectorDBBench recreate the table with the new dataset.
 
@@ -92,12 +94,11 @@
 
     ```sh
     vectordbbench duckdb-duckir --skip-search-concurrent \
-      --extension-path <full_path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension --case-type Performance1536D500K1P --duckdb-threads 10 --n-probe 28 --k 10
+      --case-type Performance1536D500K1P --duckdb-threads 10 --n-probe 28 --k 10
     ```
 
     ```sh
     vectordbbench duckdb-duckir --skip-search-concurrent \
-      --extension-path <full_path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension \
       --case-type NewIntFilterPerformanceCase \
       --dataset-with-size-type "Medium OpenAI (1536dim, 500K)" \
       --filter-rate 0.5 \
@@ -120,7 +121,7 @@ The new `ArxivFilterPerformanceCase` comes with three filter types: exact match 
 
 ```sh
 vectordbbench duckdb-duckir --skip-search-concurrent \
-  --extension-path <full path>/DuckIR/build/release/extension/duckir/duckir.duckdb_extension --k 10 --case-type ArxivFilterPerformanceCase --arxiv-filter-type EM
+  --k 10 --case-type ArxivFilterPerformanceCase --arxiv-filter-type EM
 ```
 
 # VectorDBBench(VDBBench): A Benchmark Tool for VectorDB

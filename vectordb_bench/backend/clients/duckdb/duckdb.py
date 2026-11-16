@@ -104,19 +104,24 @@ class DuckDB(VectorDB):
 
     def _load_extension(self):
         if self.case_config.index == IndexType.DUCKIR_VSS:
-            self._load_duckir_extension(self.case_config.extension_path)
+            self._load_duckir_extension()
 
         if self.case_config.index == IndexType.HNSW:
             self._load_vss_extension()
 
-    def _load_duckir_extension(self, extension_path: str):
-        load_extension_sql = f"LOAD '{extension_path}'"
-        log.debug(f"Loading DuckIR extension from {extension_path}")
-        self.conn.execute(load_extension_sql)
+    def _load_duckir_extension(self):
+        extension_path = self.case_config.extension_path
+        if extension_path:
+            log.debug(f"Loading DuckIR extension from {extension_path}")
+            self.conn.execute(f"LOAD '{extension_path}'")
+        else:
+            log.debug("Installing and loading DuckIR community extension")
+            self.conn.execute("INSTALL duckir FROM community")
+            self.conn.execute("LOAD duckir")
         self.conn.commit()
 
     def _load_vss_extension(self):
-        extension_path = getattr(self.case_config, "extension_path", None)
+        extension_path = self.case_config.extension_path
         if extension_path:
             log.debug(f"Loading VSS extension from {extension_path}")
             self.conn.execute(f"LOAD '{extension_path}'")

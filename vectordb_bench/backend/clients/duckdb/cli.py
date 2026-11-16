@@ -79,8 +79,14 @@ class DuckDBWithExtensionTypedDict(DuckDBTypedDict):
 
 class DuckDBDuckIRTypedDict(DuckDBWithExtensionTypedDict):
     extension_path: Annotated[
-        str,
-        click.option("--extension-path", type=str, help="Path to the DuckDB DuckIR extension.", required=True),
+        str | None,
+        click.option(
+            "--extension-path",
+            type=str,
+            help="Path to a locally built DuckDB DuckIR extension. If not provided, the DuckIR community extension is installed.",
+            required=False,
+            default=None,
+        ),
     ]
     quantization_type: Annotated[
         str,
