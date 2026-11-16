@@ -48,7 +48,7 @@ class DuckDBTypedDict(CommonTypedDict):
         click.option(
             "--use-blob-interface/--no-use-blob-interface",
             help="Use the blob-based query interface instead of FLOAT[] literals.",
-            default=True,
+            default=False,
             show_default=True,
         ),
     ]

@@ -42,7 +42,7 @@
     uv pip install -e '.[duckdb]'
     ```
 
-6. The clients are now ready to use for benchmarking!
+6. The clients are now ready to use for benchmarking! Use `--help` to explore all options.
 
     ```sh
     vectordbbench duckdb --help
